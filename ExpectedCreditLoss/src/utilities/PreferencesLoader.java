@@ -38,8 +38,8 @@ public class PreferencesLoader {
 			
 				lineArray = line.split("=");
 				
-				key = cleanMe(lineArray[0]);
-				value = cleanMe(lineArray[1]);
+				key = InputHandlers.cleanMe(lineArray[0]);
+				value = InputHandlers.cleanMe(lineArray[1]);
 				
 				if (!prefStore.getPrefList().contains(key)) {
 					System.out.println("WARN: preference " + key + " is not a recognised preference");
@@ -63,14 +63,5 @@ public class PreferencesLoader {
 		
 		System.out.println("Loaded " + prefStore.getSize() + " preferences");
 	}
-	
-	private String cleanMe(String s) {
-		String p = "^\\s+";
-		String q = "\\s+$";
-		
-		s = s.replaceAll(p, "");
-		s = s.replaceAll(q, "");
-		
-		return s;
-	}
+
 }
