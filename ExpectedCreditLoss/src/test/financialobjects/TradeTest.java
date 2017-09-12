@@ -59,6 +59,28 @@ public class TradeTest {
 	}
 	
 	@Test
+	public void evaluatesSetProbabilityOfRecessionAndGrowthFromRMSE() {
+		setUpTestTrade();
+		t.getCountry().setProbabilityOfRecessionAndGrowthFromRMSE();
+		
+		Double probGrowth = t.getCountry().getProbabilityOfGrowth();
+		Double expectedResult = new Double (0.80697141d);
+		
+		assertEquals(expectedResult, probGrowth, 0.01);
+	}
+	
+	@Test
+	public void evaluatesSetProbabilityOfRecessionAndGrowthFromStdDev() {
+		setUpTestTrade();
+		t.getCountry().setProbabilityOfRecessionAndGrowthFromStdDev();
+		
+		Double probGrowth = t.getCountry().getProbabilityOfGrowth();
+		Double expectedResult = new Double (0.7467700d);
+		
+		assertEquals(expectedResult, probGrowth, 0.01);
+	}
+	
+	@Test
 	public void evaluatesCalculateEAD() {
 		Date eadDate = new Date();
 		setUpTestTrade();
@@ -88,7 +110,7 @@ public class TradeTest {
 		Date endTime = new Date();
 		long diff = endTime.getTime() - startTime.getTime();
 		System.out.println("Start Time for quarterly ECL " + startTime.getTime() + ", endTime for ECL " + endTime.getTime() + ", diff " + diff + ", value = " + t.getTwelveMonthECL());
-		Double expectedResult = new Double(583897d);
+		Double expectedResult = new Double(546418d);
 		assertEquals(expectedResult, t.getTwelveMonthECL(), 2.0d);
 	}
 	
@@ -103,7 +125,7 @@ public class TradeTest {
 		long diff = endTime.getTime() - startTime.getTime();
 		System.out.println("Start Time for monthly ECL " + startTime.getTime() + ", endTime for ECL " + endTime.getTime() + ", diff " + diff + ", value = " + t.getTwelveMonthECL());
 		
-		Double expectedResult = new Double(593672d);
+		Double expectedResult = new Double(555473d);
 		assertEquals(expectedResult, t.getTwelveMonthECL(), 2.0d);
 	}
 	
@@ -118,7 +140,7 @@ public class TradeTest {
 		long diff = endTime.getTime() - startTime.getTime();
 		System.out.println("Start Time for daily ECL " + startTime.getTime() + ", endTime for ECL " + endTime.getTime() + ", diff " + diff + ", value = " + t.getTwelveMonthECL());
 		
-		Double expectedResult = new Double(598595d);
+		Double expectedResult = new Double(560033d);
 		assertEquals(expectedResult, t.getTwelveMonthECL(), 2.0d);
 	}
 	
@@ -132,7 +154,7 @@ public class TradeTest {
 		Date endTime = new Date();
 		long diff = endTime.getTime() - startTime.getTime();
 		System.out.println("Start Time for quarterly alternative ECL " + startTime.getTime() + ", endTime for ECL " + endTime.getTime() + ", diff " + diff + ", value = " + t.getTwelveMonthECL());
-		Double expectedResult = new Double(583897d);
+		Double expectedResult = new Double(560984d);
 		assertEquals(expectedResult, t.getTwelveMonthECL(), 2.0d);
 	}
 	
@@ -147,7 +169,7 @@ public class TradeTest {
 		long diff = endTime.getTime() - startTime.getTime();
 		System.out.println("Start Time for alternative monthly ECL " + startTime.getTime() + ", endTime for ECL " + endTime.getTime() + ", diff " + diff + ", value = " + t.getTwelveMonthECL());
 		
-		Double expectedResult = new Double(593672d);
+		Double expectedResult = new Double(560310d);
 		assertEquals(expectedResult, t.getTwelveMonthECL(), 2.0d);
 	}
 	
@@ -162,7 +184,7 @@ public class TradeTest {
 		long diff = endTime.getTime() - startTime.getTime();
 		System.out.println("Start Time for daily alternative ECL " + startTime.getTime() + ", endTime for ECL " + endTime.getTime() + ", diff " + diff + ", value = " + t.getTwelveMonthECL());
 		
-		Double expectedResult = new Double(598595d);
+		Double expectedResult = new Double(560033);
 		assertEquals(expectedResult, t.getTwelveMonthECL(), 2.0d);
 	}
 	
@@ -226,28 +248,28 @@ public class TradeTest {
 		List<GrossDomesticProduct> gdps = new ArrayList<>();
 		
 		GrossDomesticProduct gdp = new GrossDomesticProduct(1995); gdp.setActualGrowth(-0.016); gdps.add(gdp);
-		gdp = new GrossDomesticProduct(1996); gdp.setActualGrowth(-0.08); gdps.add(gdp);
-		gdp = new GrossDomesticProduct(1997); gdp.setActualGrowth(-0.016); gdps.add(gdp);
-		gdp = new GrossDomesticProduct(1998); gdp.setActualGrowth(0.049); gdps.add(gdp);
-		gdp = new GrossDomesticProduct(1999); gdp.setActualGrowth(-0.005); gdps.add(gdp);
-		gdp = new GrossDomesticProduct(2000); gdp.setActualGrowth(0.05); gdps.add(gdp);
-		gdp = new GrossDomesticProduct(2001); gdp.setActualGrowth(0.042); gdps.add(gdp);
-		gdp = new GrossDomesticProduct(2002); gdp.setActualGrowth(0.06); gdps.add(gdp);
-		gdp = new GrossDomesticProduct(2003); gdp.setActualGrowth(0.051); gdps.add(gdp);
-		gdp = new GrossDomesticProduct(2004); gdp.setActualGrowth(0.066); gdps.add(gdp);
-		gdp = new GrossDomesticProduct(2005); gdp.setActualGrowth(0.072); gdps.add(gdp);
-		gdp = new GrossDomesticProduct(2006); gdp.setActualGrowth(0.068); gdps.add(gdp);
-		gdp = new GrossDomesticProduct(2007); gdp.setActualGrowth(0.077); gdps.add(gdp);
-		gdp = new GrossDomesticProduct(2008); gdp.setActualGrowth(0.056); gdps.add(gdp);
-		gdp = new GrossDomesticProduct(2009); gdp.setActualGrowth(-0.042); gdps.add(gdp);
-		gdp = new GrossDomesticProduct(2010); gdp.setActualGrowth(0.001); gdps.add(gdp);
-		gdp = new GrossDomesticProduct(2011); gdp.setActualGrowth(0.016); gdps.add(gdp);
-		gdp = new GrossDomesticProduct(2012); gdp.setActualGrowth(0.002); gdps.add(gdp);
-		gdp = new GrossDomesticProduct(2013); gdp.setActualGrowth(0.013); gdps.add(gdp);
-		gdp = new GrossDomesticProduct(2014); gdp.setActualGrowth(0.015); gdps.add(gdp);
-		gdp = new GrossDomesticProduct(2015); gdp.setActualGrowth(0.03); gdps.add(gdp);
-		gdp = new GrossDomesticProduct(2016); gdp.setActualGrowth(0.03); gdps.add(gdp);
-		gdp = new GrossDomesticProduct(2017); gdp.setActualGrowth(0.028); gdps.add(gdp);
+		gdp = new GrossDomesticProduct(1996); gdp.setActualGrowth(-0.08); gdp.setOneYearPredictedGrowth(0d); gdps.add(gdp);
+		gdp = new GrossDomesticProduct(1997); gdp.setActualGrowth(-0.016); gdp.setOneYearPredictedGrowth(0.025); gdps.add(gdp);
+		gdp = new GrossDomesticProduct(1998); gdp.setActualGrowth(0.049); gdp.setOneYearPredictedGrowth(0.025); gdps.add(gdp);
+		gdp = new GrossDomesticProduct(1999); gdp.setActualGrowth(-0.005); gdp.setOneYearPredictedGrowth(0.0597); gdps.add(gdp);
+		gdp = new GrossDomesticProduct(2000); gdp.setActualGrowth(0.05); gdp.setOneYearPredictedGrowth(0.041); gdps.add(gdp);
+		gdp = new GrossDomesticProduct(2001); gdp.setActualGrowth(0.042); gdp.setOneYearPredictedGrowth(0.04); gdps.add(gdp);
+		gdp = new GrossDomesticProduct(2002); gdp.setActualGrowth(0.06); gdp.setOneYearPredictedGrowth(0.05d); gdps.add(gdp);
+		gdp = new GrossDomesticProduct(2003); gdp.setActualGrowth(0.051); gdp.setOneYearPredictedGrowth(0.05d); gdps.add(gdp);
+		gdp = new GrossDomesticProduct(2004); gdp.setActualGrowth(0.066); gdp.setOneYearPredictedGrowth(0.055); gdps.add(gdp);
+		gdp = new GrossDomesticProduct(2005); gdp.setActualGrowth(0.072); gdp.setOneYearPredictedGrowth(0.052); gdps.add(gdp);
+		gdp = new GrossDomesticProduct(2006); gdp.setActualGrowth(0.068); gdp.setOneYearPredictedGrowth(0.055); gdps.add(gdp);
+		gdp = new GrossDomesticProduct(2007); gdp.setActualGrowth(0.077); gdp.setOneYearPredictedGrowth(0.06d); gdps.add(gdp);
+		gdp = new GrossDomesticProduct(2008); gdp.setActualGrowth(0.056); gdp.setOneYearPredictedGrowth(0.0587); gdps.add(gdp);
+		gdp = new GrossDomesticProduct(2009); gdp.setActualGrowth(-0.042); gdp.setOneYearPredictedGrowth(0.0425); gdps.add(gdp);
+		gdp = new GrossDomesticProduct(2010); gdp.setActualGrowth(0.001); gdp.setOneYearPredictedGrowth(-0.025); gdps.add(gdp);
+		gdp = new GrossDomesticProduct(2011); gdp.setActualGrowth(0.016); gdp.setOneYearPredictedGrowth(0.02d); gdps.add(gdp);
+		gdp = new GrossDomesticProduct(2012); gdp.setActualGrowth(0.002); gdp.setOneYearPredictedGrowth(0.03d); gdps.add(gdp);
+		gdp = new GrossDomesticProduct(2013); gdp.setActualGrowth(0.013); gdp.setOneYearPredictedGrowth(0.015); gdps.add(gdp);
+		gdp = new GrossDomesticProduct(2014); gdp.setActualGrowth(0.015); gdp.setOneYearPredictedGrowth(0.016); gdps.add(gdp);
+		gdp = new GrossDomesticProduct(2015); gdp.setActualGrowth(0.03); gdp.setOneYearPredictedGrowth(0.02d); gdps.add(gdp);
+		gdp = new GrossDomesticProduct(2016); gdp.setActualGrowth(0.03); gdp.setOneYearPredictedGrowth(0.019); gdps.add(gdp);
+		gdp = new GrossDomesticProduct(2017); gdp.setActualGrowth(0.028); gdp.setOneYearPredictedGrowth(0.028); gdps.add(gdp);
 		gdp = new GrossDomesticProduct(2018); gdp.setOneYearPredictedGrowth(0.025); gdps.add(gdp);
 
 		Collections.sort(gdps);

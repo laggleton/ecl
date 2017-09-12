@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import financialobjects.Trade;
-import referenceobjects.Currency;
-import referenceobjects.Rating;
 
 public class TradeStore {
 	private static TradeStore instance;

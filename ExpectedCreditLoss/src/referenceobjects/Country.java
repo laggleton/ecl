@@ -9,6 +9,8 @@ import java.util.List;
 import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 
+import utilities.Logger;
+
 public class Country {
 	private String countryName;
 	private String iso3AlphaCode;
@@ -18,13 +20,19 @@ public class Country {
 	private Double probGrowth;
 	private List<GrossDomesticProduct> gdps = new ArrayList<>();
 	
-	public void setProbabilityOfRecessionAndGrowth() {
+	private Logger l = Logger.getInstance();
+	
+	/*
+	 * Deprecated in favour of RMSE
+	 */
+	@Deprecated
+	public void setProbabilityOfRecessionAndGrowthFromStdDev() {
 		Calendar calendar = new GregorianCalendar();
 		calendar.setTime(BusinessDate.getInstance().getDate());
 		int currentYear = calendar.get(Calendar.YEAR);
 		int nextYear = currentYear + 1;
 		
-		Double stdDev = getStandardDeviationForGDPs(currentYear);
+		Double stdDev = getStandardDeviationForGDPs(currentYear); 
 		
 		Double lastGrowth = getGrowthForYear(currentYear);
 		Double nextGrowth = getGrowthForYear(nextYear);	
@@ -34,6 +42,39 @@ public class Country {
 		Double currentGrowth = ((month/12) * nextGrowth) + ((12-month)/12) * lastGrowth;
 		
 		NormalDistribution nd = new NormalDistribution(currentGrowth, stdDev);
+		probRecession = nd.cumulativeProbability(0d);
+		probGrowth = 1 - probRecession;
+	}
+	
+	public void setProbabilityOfRecessionAndGrowth() {
+		setProbabilityOfRecessionAndGrowthFromRMSE();
+		//setProbabilityOfRecessionAndGrowthFromStdDev();
+	}
+	
+	public void setProbabilityOfRecessionAndGrowthFromRMSE() {
+		Calendar calendar = new GregorianCalendar();
+		calendar.setTime(BusinessDate.getInstance().getDate());
+		int currentYear = calendar.get(Calendar.YEAR);
+		int nextYear = currentYear + 1;
+		
+		Double rmse = getRootMeanSquaredErrorForGDPs();
+		
+		Double lastGrowth = getGrowthForYear(currentYear);
+		Double nextGrowth = getGrowthForYear(nextYear);	
+		
+		double month = (double)calendar.get(Calendar.MONTH) + 1.0d;
+		Double currentGrowth = 0d;
+		try {
+			 currentGrowth = ((month/12) * nextGrowth) + ((12-month)/12) * lastGrowth;
+		}
+		catch (Exception e) {
+			l.error(e);
+			l.error(this.countryName);
+			l.error("currentYear = " + currentYear);
+			l.error("nextYear = " + nextYear);
+		}
+				
+		NormalDistribution nd = new NormalDistribution(currentGrowth, rmse);
 		probRecession = nd.cumulativeProbability(0d);
 		probGrowth = 1 - probRecession;
 	}
@@ -101,6 +142,25 @@ public class Country {
 		this.countryName = countryName;
 	}
 	
+	public Double getRootMeanSquaredErrorForGDPs() {
+		Double error;
+		Double square;
+		Double runningSum = 0d;
+		int count = 0;
+		for (GrossDomesticProduct gdp : gdps) {
+			if (!(gdp.getActualGrowth() == null) && (!(gdp.getOneYearPredictedGrowth() == null))) {
+				error = gdp.getActualGrowth() - gdp.getOneYearPredictedGrowth();
+				square = Math.pow(error, 2);
+				runningSum += square;
+			}
+			count++;
+		}
+		
+		Double mse = runningSum / (double) count;
+		
+		return Math.sqrt(mse);
+	}
+	
 	public Double getStandardDeviationForGDPs(int currentYear) {
 		
 		SummaryStatistics ss = new SummaryStatistics();
@@ -114,17 +174,12 @@ public class Country {
 		return ss.getStandardDeviation();
 	}
 	
-	public Double getRMSEForGDPs(int currentYear) {
-		//TODO implement
-		return 0d;
-	}
-
 	public Double getGrowthForYear(int year) {
 		for (GrossDomesticProduct gdp : gdps) {
 			if (gdp.getReferenceYear() == year) {
-				if (gdp.getActualGrowth() != -99999999d) { return gdp.getActualGrowth(); }
-				else if (gdp.getOneYearPredictedGrowth() != -99999999d) { return gdp.getOneYearPredictedGrowth(); }
-				else if (gdp.getTwoYearPredictedGrowth() != -99999999d) { return gdp.getTwoYearPredictedGrowth(); }
+				if (gdp.getActualGrowth() != null) { return gdp.getActualGrowth(); }
+				else if (gdp.getOneYearPredictedGrowth() != null) { return gdp.getOneYearPredictedGrowth(); }
+				else if (gdp.getTwoYearPredictedGrowth() != null) { return gdp.getTwoYearPredictedGrowth(); }
 			}
 		}
 		//TODO error no data

@@ -2,9 +2,9 @@ package referenceobjects;
 
 public class GrossDomesticProduct implements Comparable<GrossDomesticProduct> {
 	private int referenceYear;
-	private Double actualGrowth = new Double(-99999999d);
-	private Double oneYearPredictedGrowth = new Double(-99999999d);
-	private Double twoYearPredictedGrowth = new Double(-99999999d);
+	private Double actualGrowth;
+	private Double oneYearPredictedGrowth;
+	private Double twoYearPredictedGrowth;
 	
 	public GrossDomesticProduct(int referenceYear) {
 		this.referenceYear = referenceYear;

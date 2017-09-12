@@ -129,13 +129,14 @@ public class ECLDataLoader {
 	 * Value
 	 */
 	public void setUpGDPs() {
-		String line;
+		String line = "";
 		String[] lineArray;
 		boolean first = true;
 		GrossDomesticProduct gdp;
 		String country;
 		Integer year;
 		Double value;
+		Double oneYearGrowth;
 		
 		CountryStore ctryStore = CountryStore.getInstance();
 				
@@ -157,17 +158,27 @@ public class ECLDataLoader {
 				lineArray = line.split("\t");
 				
 				country = lineArray[0];
-				year = new Integer(lineArray[1]);
-				value = new Double(lineArray[2]);
+				year = intMe(lineArray[1]);
+				value = doubleMe(lineArray[2]);
+				
+				try {
+					oneYearGrowth = doubleMe(lineArray[3]);
+				}
+				catch (ArrayIndexOutOfBoundsException e) {
+					oneYearGrowth = null;
+				}
 					
 				gdp = new GrossDomesticProduct(year);
 				gdp.setActualGrowth(value);
+				gdp.setOneYearPredictedGrowth(oneYearGrowth);
 				
 				ctryStore.getCountry(country).addGdp(gdp);
 			}
 		}
 		catch (Exception fe) {
 			fe.printStackTrace();
+			ps.printAll();
+			l.error(line);
 		}
 		finally {
 			try {

@@ -3,9 +3,7 @@ package referenceobjects.stores;
 import java.util.HashMap;
 import java.util.Map;
 
-import referenceobjects.BusinessDate;
 import referenceobjects.Country;
-import referenceobjects.Currency;
 
 public class CountryStore {
 	private static CountryStore instance;

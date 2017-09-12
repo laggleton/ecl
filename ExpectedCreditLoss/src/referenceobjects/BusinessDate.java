@@ -2,10 +2,7 @@ package referenceobjects;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
-import referenceobjects.Currency;
 import utilities.Logger;
 
 public class BusinessDate {
