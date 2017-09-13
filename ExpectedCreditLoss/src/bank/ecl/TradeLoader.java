@@ -1,4 +1,4 @@
-package ebrd.ecl;
+package bank.ecl;
 
 import java.io.BufferedReader;
 import java.io.FileReader;

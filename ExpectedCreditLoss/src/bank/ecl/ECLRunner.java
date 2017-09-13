@@ -1,12 +1,28 @@
-package ebrd.ecl;
+package bank.ecl;
 
+import utilities.Logger;
 import utilities.PreferencesLoader;
 
 public class ECLRunner {
 	
+	/* 
+	 * Usage:
+	 * arg[0] = preferences file
+	 */
 	public static void main(String[] args) {
 		
-		PreferencesLoader pl = new PreferencesLoader("C:\\Users\\927624\\Documents\\EBRD Phase 2\\EBRD Test data\\EBRD (1)\\ebrd_ecl.preferences");
+		Logger l = Logger.getInstance();
+		String preferencesFile = "";
+		try { 
+			preferencesFile = args[0];
+		}
+		catch (Exception fe) {
+			l.error(fe);
+			l.error("Preferences file not specified! Exiting");
+			System.exit(1);
+		}
+		
+		PreferencesLoader pl = new PreferencesLoader(preferencesFile);
 		pl.load();
 		
 		ECLDataLoader dl = new ECLDataLoader();

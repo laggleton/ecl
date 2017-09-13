@@ -1,4 +1,4 @@
-package ebrd.ecl;
+package bank.ecl;
 
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -68,7 +68,7 @@ public class ECLDataLoader {
 			
 			Date d = new Date();
 			
-			File file = new File(ps.getPreference(PreferencesStore.DIRECTORY) + "ecl_ebrd-" + DateFormat.OUTPUT_FORMAT.format(d) + ".csv");
+			File file = new File(ps.getPreference(PreferencesStore.DIRECTORY) + "ecl_bank-" + DateFormat.OUTPUT_FORMAT.format(d) + ".csv");
 	      
 			// creates the file
 			file.createNewFile();
