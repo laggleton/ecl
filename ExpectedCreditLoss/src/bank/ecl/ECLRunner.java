@@ -28,7 +28,8 @@ public class ECLRunner {
 		ECLDataLoader dl = new ECLDataLoader();
 		dl.loadData();
 		dl.calculateECL();
-		dl.printResults();
+		dl.printResults(true);
+
 	}
 
 }

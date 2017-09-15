@@ -6,9 +6,14 @@ import java.util.concurrent.TimeUnit;
 import referenceobjects.*;
 import referenceobjects.Currency;
 import referenceobjects.stores.FxRateStore;
+import utilities.Logger;
 
 public class Trade {
 	private String tradeIdentifier;
+	private String dealId;
+	private String facilityId;
+	private String bookId;
+	
 	private Integer notional;
 	private Currency currency;
 	private List<CashFlow> cfs = new ArrayList<>();
@@ -27,11 +32,6 @@ public class Trade {
 	private Institution guarantor;
 	private Date maturityDate;
 	private Date asOfDate;
-	private Double twelveMonthECL;
-	private Double lifetimeECL;
-	private Double twelveMonthECLEUR;
-	private Double lifetimeECLEUR;
-	private int impairmentStageIFRS9 = 1;
 	private boolean impaired = false;
 	
 	public static final double DAILY = 1.0d;
@@ -40,35 +40,35 @@ public class Trade {
 	
 	private String firstDisbursementCurrency;
 	
+	private ECLResult eclResult;
+	private List<ECLIntermediateResult> eclIntermediateList = new ArrayList<>();
+	
 	//public Logger log = new Logger();
 	
 	public Trade(String instrumentId, String posId, String bookId, String tradeId, Integer tradeSize, String currency) {
 		this.currency = new Currency(currency);
 		this.notional = tradeSize;
 		this.tradeIdentifier = tradeId;
+		this.dealId = instrumentId;
+		this.facilityId = posId;
+		this.bookId = bookId;
 		Position pos = new Position(instrumentId, posId, bookId);
 		//TODO Position lookup
 		pos.addTrade(this);
 	}
 	
-	private void convertToEUR() {
-		double eurFx = FxRateStore.getInstance().getCurrency("EUR").getAsOfDateRate();
-		double disbFx = FxRateStore.getInstance().getCurrency(getFirstDisbursementCurrency()).getAsOfDateRate();
-		
-		twelveMonthECLEUR = twelveMonthECL * disbFx / eurFx;
-		lifetimeECLEUR = lifetimeECL * disbFx / eurFx;
-	}
-	
 	public List<CashFlow> getCashFlows() { return cfs; }
 	
-	public void assessIFRS9Staging() {
+	public int assessIFRS9Staging() {
 				
 		if ((impaired)|| (creditRating == "8.0") || (daysPastDue > 90) || ((daysInStage3 < 60) && (daysInStage3 > 0))) {
-			impairmentStageIFRS9 = 3;
+			return 3;
 		}
 		else if (threeNotchDownGrade() || (watchlist > 3) || (daysPastDue > 30) || ((daysInStage2 < 60) && (daysInStage2 > 0)) ) {
-			impairmentStageIFRS9 = 2;
+			return 2;
 		}
+		
+		return 1;
 		
 	}
 	
@@ -130,7 +130,7 @@ public class Trade {
 		
 		for (Scenario s : scenList) {
 			calculateECL(s);
-			totalECL += ((s.getWeight()/totalWeight) * twelveMonthECL);
+			totalECL += ((s.getWeight()/totalWeight) * eclResult.getTwelveMonthECL());
 		}
 	}
 	
@@ -154,6 +154,8 @@ public class Trade {
 		List<LossGivenDefault> lgds = getLGDs(s);
 		Double eir = calculateEIR(cfs);
 		
+		eclResult = new ECLResult(dealId, facilityId, bookId, tradeIdentifier, getFirstDisbursementCurrency());
+				
 		long diff = maturityDate.getTime() - asOfDate.getTime();
 		long days =  TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
 		int periods = (int) (days/periodLength);
@@ -169,8 +171,8 @@ public class Trade {
 	
 		Double discountFactor = new Double(0d);
 		Double periodECL = new Double(0d);
-		lifetimeECL = new Double(0d);
-		twelveMonthECL = new Double(0d);
+		Double lifetimeECL = new Double(0d);
+		Double twelveMonthECL = new Double(0d);
 		boolean twelveMonthECLCheck = true;
 		gc = GregorianCalendar.getInstance();
 		gc.setTime(asOfDate);
@@ -185,16 +187,28 @@ public class Trade {
 			periodDate = gc.getTime();
 			
 			if (periodDate.after(maturityDate)) { periodDate = maturityDate; }
-					
+			
+			ECLIntermediateResult e = new ECLIntermediateResult(dealId, facilityId, bookId, tradeIdentifier, getFirstDisbursementCurrency());
+			
 			discountFactor = getDiscountFactor(asOfDate, periodDate, eir);
 			ead = calculateEAD(periodDate, cfs, eir);
+			
 			pd = calculateAbsolutePD(asOfDate, periodDate, pds);
 			incrementalPD = calculateIncrementalPD(lastPD, pd);
 			lgd = calculateLGD(lgds);
 			
 			periodECL = discountFactor * ead * incrementalPD * lgd;
 			
-			//System.out.println("Period " + i + ", Date " + gc.get(Calendar.YEAR) + gc.get(Calendar.MONTH) + gc.get(Calendar.DATE) + ", df " + discountFactor + ", ead " + ead + ", incrementalPD " + incrementalPD + ", lgd " + lgd + ", periodECL " + periodECL);
+			e.setPeriodDate(periodDate);
+			e.setEad(ead);
+			e.setDiscountFactor(discountFactor);
+			e.setProbabilityOfDefault(pd);
+			e.setIncrementalPD(incrementalPD);
+			e.setPeriodECL(periodECL);
+			e.setLgd(lgd);
+			
+			eclIntermediateList.add(e);
+
 			lifetimeECL += periodECL;
 			
 			if (twelveMonthECLCheck)  {
@@ -208,101 +222,12 @@ public class Trade {
 			lastPD = pd;
 		}
 		
-				
 		if (twelveMonthECL == 0d) { twelveMonthECL = lifetimeECL; }
 		
-		convertToEUR();
-	}
-	
-	public Double getTwelveMonthECLEUR() {
-		return twelveMonthECLEUR;
-	}
-
-	public void setTwelveMonthECLEUR(Double twelveMonthECLEUR) {
-		this.twelveMonthECLEUR = twelveMonthECLEUR;
-	}
-
-	public Double getLifetimeECLEUR() {
-		return lifetimeECLEUR;
-	}
-
-	public void setLifetimeECLEUR(Double lifetimeECLEUR) {
-		this.lifetimeECLEUR = lifetimeECLEUR;
-	}
-
-	/*
-	 * Alternative methodology for calculating ECL
-	 */
-	public void calculateAlternativeECL(Scenario s, double periodLength) {
-		
-		if (maturityDate.before(asOfDate)) { 
-			System.out.println("Maturity Date " + maturityDate.toString() + " before asOfDate " + asOfDate.toString());
-		} //don't care about matured trades
-		
-		List<CashFlow> cfs = getCFs(s); 
-		List<ProbabilityOfDefault> pds = getPDs(s);
-		List<LossGivenDefault> lgds = getLGDs(s);
-		Double eir = calculateEIR(cfs);
-		
-		long diff = maturityDate.getTime() - asOfDate.getTime();
-		long days =  TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
-		int periods = (int) (days/periodLength);
-		
-		int daysFromAsOf;
-		Double ead = new Double(0d);
-		Double pd = new Double (0d);
-		Double lastPD = new Double (0d);
-		Double incrementalPD = new Double (0d);
-		Double lgd = new Double (0d);
-		Date periodDate;
-		Date startPeriodDate = asOfDate;
-		Calendar gc;
-	
-		Double discountFactor = new Double(0d);
-		Double periodECL = new Double(0d);
-		lifetimeECL = new Double(0d);
-		twelveMonthECL = new Double(0d);
-		boolean twelveMonthECLCheck = true;
-		gc = GregorianCalendar.getInstance();
-		gc.setTime(asOfDate);
-		gc.add(Calendar.YEAR, 1);
-		Date oneYearDate = gc.getTime();
-		
-		for (int i = 1; i <= periods; i++) {
-			daysFromAsOf = (int) (i * periodLength);
-			
-			gc.setTime(asOfDate);
-			gc.add(Calendar.DATE, daysFromAsOf);
-			periodDate = gc.getTime();
-						
-			if (periodDate.after(maturityDate)) { periodDate = maturityDate; }
-					
-			discountFactor = getDiscountFactor(asOfDate, startPeriodDate, eir);
-			ead = calculateEAD(startPeriodDate, cfs, eir);
-			pd = calculateAbsolutePD(asOfDate, periodDate, pds);
-			incrementalPD = calculateIncrementalPD(lastPD, pd);
-			lgd = calculateLGD(lgds);
-			
-			periodECL = discountFactor * ead * incrementalPD * lgd;
-			
-			//System.out.println("Period " + i + ", Date " + gc.get(Calendar.YEAR) + gc.get(Calendar.MONTH) + gc.get(Calendar.DATE) + ", df " + discountFactor + ", ead " + ead + ", incrementalPD " + incrementalPD + ", lgd " + lgd + ", periodECL " + periodECL);
-			lifetimeECL += periodECL;
-			
-			if (twelveMonthECLCheck)  {
-				
-				if (periodDate.equals(oneYearDate) || periodDate.after(oneYearDate)) { 
-					twelveMonthECL = lifetimeECL;
-					twelveMonthECLCheck = false;
-				}
-			}
-			
-			lastPD = pd;
-			gc.add(Calendar.DATE, 1);
-			startPeriodDate = gc.getTime();
-		}
-		
-		if (twelveMonthECL == 0d) { twelveMonthECL = lifetimeECL; }
-		convertToEUR();
+		eclResult.setLifetimeECL(lifetimeECL);
+		eclResult.setTwelveMonthECL(twelveMonthECL);
+		eclResult.setEir(eir);
+		eclResult.setImpairmentStageIFRS9(assessIFRS9Staging());
 	}
 	
 	/*
@@ -475,22 +400,6 @@ public class Trade {
 		this.tradeIdentifier = tradeIdentifier;
 	}
 
-	public Double getTwelveMonthECL() {
-		return twelveMonthECL;
-	}
-
-	public void setTwelveMonthECL(Double twelveMonthECL) {
-		this.twelveMonthECL = twelveMonthECL;
-	}
-
-	public Double getLifetimeECL() {
-		return lifetimeECL;
-	}
-
-	public void setLifetimeECL(Double lifetimeECL) {
-		this.lifetimeECL = lifetimeECL;
-	}
-
 	private List<ProbabilityOfDefault> getPDs(Scenario s) {
 		//TODO for multiple scenarios
 		
@@ -510,8 +419,6 @@ public class Trade {
 		Collections.sort(adjustedPDs);
 		return adjustedPDs;
 	}
-	
-	
 	
 	private List<LossGivenDefault> getLGDs(Scenario s) {
 		//TODO for multiple scenarios
@@ -586,14 +493,6 @@ public class Trade {
 		this.daysInStage3 = daysInStage3;
 	}
 
-	public int getImpairmentStageIFRS9() {
-		return impairmentStageIFRS9;
-	}
-
-	public void setImpairmentStageIFRS9(int impairmentStageIFRS9) {
-		this.impairmentStageIFRS9 = impairmentStageIFRS9;
-	}
-
 	public boolean isImpaired() {
 		return impaired;
 	}
@@ -643,21 +542,12 @@ public class Trade {
 		
 	}
 	
-	public void printECLResults() {
-		System.out.println(getTradeIdentifier() + "," + getFirstDisbursementCurrency() + "," + getTwelveMonthECL() + "," + getLifetimeECL() + "," + getImpairmentStageIFRS9() + "," + getTwelveMonthECLEUR() + "," + getLifetimeECLEUR() + "," + getProvisionEUR());
-	}
-	
-	public String getECLResults() {
-		return getTradeIdentifier() + "," + getFirstDisbursementCurrency() + "," + getTwelveMonthECL() + "," + getLifetimeECL() + "," + getImpairmentStageIFRS9() + "," + getTwelveMonthECLEUR() + "," + getLifetimeECLEUR() + "," + getProvisionEUR();
+	public ECLResult getECLResult() {
+		return eclResult;
 	}
 
-	public double getProvisionEUR() {
-		if (impairmentStageIFRS9 == 1) {
-			return getTwelveMonthECLEUR();
-		}
-		else if (impairmentStageIFRS9 == 2) {
-			return getLifetimeECLEUR();
-		}
-		return 0d;
+	public List<ECLIntermediateResult> getIntermediateECLResults() {
+		Collections.sort(eclIntermediateList);
+		return eclIntermediateList;
 	}
 }

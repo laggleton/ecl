@@ -1,0 +1,8 @@
+business.date=2017-05-31
+working.directory=C:\\Users\\927624\\Documents\\EBRD Phase 2\\EBRD Test data\\EBRD (1)\\
+pd.file=PDSurface.EBRD_PDSurface
+gdp.file=new_HistoricGDPGrowth.EBRD_HistoricGDPGrowth
+contract.file=ContractFDR1.EBRD_ContractFDR
+cashflow.file=CashFlowFR2Summit.EBRD_CashFlow
+fx.file=FXRatesHistoric_USD.csv
+outputfile.delimiter=,

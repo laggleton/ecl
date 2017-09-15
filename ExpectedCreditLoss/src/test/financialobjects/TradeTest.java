@@ -109,9 +109,9 @@ public class TradeTest {
 		t.calculateECL(s); //quarterly
 		Date endTime = new Date();
 		long diff = endTime.getTime() - startTime.getTime();
-		System.out.println("Start Time for quarterly ECL " + startTime.getTime() + ", endTime for ECL " + endTime.getTime() + ", diff " + diff + ", value = " + t.getTwelveMonthECL());
+		System.out.println("Start Time for quarterly ECL " + startTime.getTime() + ", endTime for ECL " + endTime.getTime() + ", diff " + diff + ", value = " + t.getECLResult().getTwelveMonthECL());
 		Double expectedResult = new Double(546418d);
-		assertEquals(expectedResult, t.getTwelveMonthECL(), 2.0d);
+		assertEquals(expectedResult, t.getECLResult().getTwelveMonthECL(), 2.0d);
 	}
 	
 	@Test
@@ -123,10 +123,10 @@ public class TradeTest {
 		t.calculateECL(s, 30.4375d); //monthly
 		Date endTime = new Date();
 		long diff = endTime.getTime() - startTime.getTime();
-		System.out.println("Start Time for monthly ECL " + startTime.getTime() + ", endTime for ECL " + endTime.getTime() + ", diff " + diff + ", value = " + t.getTwelveMonthECL());
+		System.out.println("Start Time for monthly ECL " + startTime.getTime() + ", endTime for ECL " + endTime.getTime() + ", diff " + diff + ", value = " + t.getECLResult().getTwelveMonthECL());
 		
 		Double expectedResult = new Double(555473d);
-		assertEquals(expectedResult, t.getTwelveMonthECL(), 2.0d);
+		assertEquals(expectedResult, t.getECLResult().getTwelveMonthECL(), 2.0d);
 	}
 	
 	@Test
@@ -138,56 +138,13 @@ public class TradeTest {
 		t.calculateECL(s, 1.0d); //monthly
 		Date endTime = new Date();
 		long diff = endTime.getTime() - startTime.getTime();
-		System.out.println("Start Time for daily ECL " + startTime.getTime() + ", endTime for ECL " + endTime.getTime() + ", diff " + diff + ", value = " + t.getTwelveMonthECL());
+		System.out.println("Start Time for daily ECL " + startTime.getTime() + ", endTime for ECL " + endTime.getTime() + ", diff " + diff + ", value = " + t.getECLResult().getTwelveMonthECL());
 		
 		Double expectedResult = new Double(560033d);
-		assertEquals(expectedResult, t.getTwelveMonthECL(), 2.0d);
+		assertEquals(expectedResult, t.getECLResult().getTwelveMonthECL(), 2.0d);
 	}
 	
-	@Test
-	public void evaluatesCalculateQuarterlyAlternativeECL() {
-		
-		setUpTestTrade();
-		Scenario s = new Scenario(1.0d);
-		Date startTime = new Date();
-		t.calculateAlternativeECL(s, 91.3125d); //quarterly
-		Date endTime = new Date();
-		long diff = endTime.getTime() - startTime.getTime();
-		System.out.println("Start Time for quarterly alternative ECL " + startTime.getTime() + ", endTime for ECL " + endTime.getTime() + ", diff " + diff + ", value = " + t.getTwelveMonthECL());
-		Double expectedResult = new Double(560984d);
-		assertEquals(expectedResult, t.getTwelveMonthECL(), 2.0d);
-	}
-	
-	@Test
-	public void evaluatesMonthlyAlternativeECL() {
-		
-		setUpTestTrade();
-		Scenario s = new Scenario(1.0d);
-		Date startTime = new Date();
-		t.calculateAlternativeECL(s, 30.4375d); //monthly
-		Date endTime = new Date();
-		long diff = endTime.getTime() - startTime.getTime();
-		System.out.println("Start Time for alternative monthly ECL " + startTime.getTime() + ", endTime for ECL " + endTime.getTime() + ", diff " + diff + ", value = " + t.getTwelveMonthECL());
-		
-		Double expectedResult = new Double(560310d);
-		assertEquals(expectedResult, t.getTwelveMonthECL(), 2.0d);
-	}
-	
-	@Test
-	public void evaluatesDailyAlternativeECL() {
-		
-		setUpTestTrade();
-		Scenario s = new Scenario(1.0d);
-		Date startTime = new Date();
-		t.calculateAlternativeECL(s, 1.0d); //daily
-		Date endTime = new Date();
-		long diff = endTime.getTime() - startTime.getTime();
-		System.out.println("Start Time for daily alternative ECL " + startTime.getTime() + ", endTime for ECL " + endTime.getTime() + ", diff " + diff + ", value = " + t.getTwelveMonthECL());
-		
-		Double expectedResult = new Double(560033);
-		assertEquals(expectedResult, t.getTwelveMonthECL(), 2.0d);
-	}
-	
+
 	@Test
 	public void evaluateCalculateEIR() {
 		//TODO
@@ -239,7 +196,7 @@ public class TradeTest {
 		t.setRating(new Rating("6.3"));
 		t.assessIFRS9Staging();
 		
-		assertEquals(2, t.getImpairmentStageIFRS9());
+		assertEquals(2, t.assessIFRS9Staging());
 	}
 	
 	private void setUpGrowthData() {

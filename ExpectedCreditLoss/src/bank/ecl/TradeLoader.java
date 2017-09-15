@@ -187,8 +187,12 @@ public class TradeLoader {
 				rollConvention = lineArray[42];
 				lastAvailabilityDate = InputHandlers.dateMe(lineArray[43], DateFormat.DMY_FORMAT);
 				effectiveYield = InputHandlers.doubleMe(lineArray[44]);
-			
-				t = new Trade(contractReference, contractReference, bookID, contractReference, principal.intValue(), currency);
+				
+				String[] split = contractReference.split("/");
+				String dealId = split[0];
+				String facilityId = split[1];
+				
+				t = new Trade(dealId, facilityId, bookID, contractReference, principal.intValue(), currency);
 				
 				t.setEIR(effectiveYield);
 				t.setCountry(CountryStore.getInstance().getCountry(countryOfRisk));

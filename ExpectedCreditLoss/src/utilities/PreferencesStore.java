@@ -16,6 +16,7 @@ public class PreferencesStore {
 	public static final String FX_FILE = "fx.file";
 	public static final String DIRECTORY = "working.directory";
 	public static final String BUSINESS_DATE = "business.date";
+	public static final String OUTPUT_DELIMITER = "outputfile.delimiter";
 		
 	private static final List<String> prefList = new ArrayList<>(
 			Arrays.asList(
@@ -25,7 +26,8 @@ public class PreferencesStore {
 					, GDP_FILE
 					, DIRECTORY
 					, FX_FILE
-					, BUSINESS_DATE));
+					, BUSINESS_DATE
+					, OUTPUT_DELIMITER));
 	
 	private Map<String, String> preferencesMap = new HashMap<>();
 	
