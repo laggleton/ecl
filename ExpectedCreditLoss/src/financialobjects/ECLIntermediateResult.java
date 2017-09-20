@@ -1,9 +1,13 @@
 package financialobjects;
 
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.concurrent.TimeUnit;
 
 import referenceobjects.BusinessDate;
 import referenceobjects.DateFormat;
+import utilities.DateTimeUtils;
 
 public class ECLIntermediateResult implements Comparable<ECLIntermediateResult> {
 	private String dealId;
@@ -28,18 +32,20 @@ public class ECLIntermediateResult implements Comparable<ECLIntermediateResult> 
 		this.firstDisbursementCurrency = firstDisbursementCurrency;
 	}
 	
+	public String getTenor() {
+		Date asOfDate = BusinessDate.getInstance().getDate();
+		long dayDiff = DateTimeUtils.getDateDiff(asOfDate, getPeriodDate(), TimeUnit.DAYS);
+		int monthDiff = (int) (dayDiff / DateTimeUtils.MONTHLY);
+		
+		return monthDiff + "M";
+	}
+	
 	/*
 	 * Method to return data for output
 	 * If you change this method you *must* change the static getHeader() method below
 	 */
 	public String toString(String delimiter) {
-		return getDealId() 
-				+ delimiter + getFacilityId()
-				+ delimiter + getTradeIdentifier()
-				+ delimiter + getBookId()
-				+ delimiter + DateFormat.ISO_FORMAT.format(asOfDate)
-				+ delimiter + DateFormat.ISO_FORMAT.format(new Date())
-				+ delimiter + DateFormat.ISO_FORMAT.format(periodDate) // TODO convert to Tenor
+		return getTenor()
 				+ delimiter + getProbabilityOfDefault()
 				+ delimiter + getLgd()
 				+ delimiter + getEad()
@@ -48,13 +54,7 @@ public class ECLIntermediateResult implements Comparable<ECLIntermediateResult> 
 	}
 	
 	public static String getHeader(String delimiter) {
-		return "DealId" 
-				+ delimiter + "FacilityId"
-				+ delimiter + "ContractReference"
-				+ delimiter + "BookId"
-				+ delimiter + "BalanceSheetDate"
-				+ delimiter + "RunDate"
-				+ delimiter + "Tenor" 
+		return "Tenor" 
 				+ delimiter + "PD"
 				+ delimiter + "LGD"
 				+ delimiter + "EAD"

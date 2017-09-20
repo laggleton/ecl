@@ -34,10 +34,6 @@ public class Trade {
 	private Date asOfDate;
 	private boolean impaired = false;
 	
-	public static final double DAILY = 1.0d;
-	public static final double MONTHLY = 30.4375d;
-	public static final double QUARTERLY = 91.3125d;
-	
 	private String firstDisbursementCurrency;
 	
 	private ECLResult eclResult;
@@ -58,6 +54,16 @@ public class Trade {
 	}
 	
 	public List<CashFlow> getCashFlows() { return cfs; }
+	
+	public List<CashFlow> getFutureCashFlows() {
+		List<CashFlow> futCFs = new ArrayList<>();
+		for (CashFlow cf : cfs) {
+			if (asOfDate.before(cf.getCashFlowDate())) {
+				futCFs.add(cf);
+			}
+		}
+		return futCFs;
+	}
 	
 	public int assessIFRS9Staging() {
 				
@@ -387,9 +393,14 @@ public class Trade {
 		for (CashFlow cf : cfs) {
 			if (cf.getCashFlowType().equals(CashFlowType.DISBURSEMENT)) {
 				firstDisbursementCurrency = cf.getCurrency();
-				return;
+				break;
 			}
 		}
+		
+		for (CashFlow cf : cfs) {
+			cf.setTradeDisbursementCurrency(firstDisbursementCurrency);
+		}
+		
 	}
 	
 	public String getTradeIdentifier() {
@@ -550,4 +561,49 @@ public class Trade {
 		Collections.sort(eclIntermediateList);
 		return eclIntermediateList;
 	}
+	
+	public String getPrimaryKeyDecorator(String delimiter) {
+		return getDealId() 
+			+ delimiter + getFacilityId()
+			+ delimiter + getTradeIdentifier()
+			+ delimiter + getBookId()
+			+ delimiter + DateFormat.ISO_FORMAT.format(BusinessDate.getInstance().getDate())
+			+ delimiter + DateFormat.ISO_FORMAT.format(new Date())
+			+ delimiter;
+	}
+	
+	public static String getPrimaryKeyHeader(String delimiter) {
+		return "DealId" 
+			+ delimiter + "FacilityId"
+			+ delimiter + "ContractReference"
+			+ delimiter + "BookId"
+			+ delimiter + "BalanceSheetDate"
+			+ delimiter + "RunDate"
+			+ delimiter;
+	}
+
+	public String getDealId() {
+		return dealId;
+	}
+
+	public void setDealId(String dealId) {
+		this.dealId = dealId;
+	}
+
+	public String getFacilityId() {
+		return facilityId;
+	}
+
+	public void setFacilityId(String facilityId) {
+		this.facilityId = facilityId;
+	}
+
+	public String getBookId() {
+		return bookId;
+	}
+
+	public void setBookId(String bookId) {
+		this.bookId = bookId;
+	}
+	
 }

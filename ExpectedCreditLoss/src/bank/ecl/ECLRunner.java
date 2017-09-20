@@ -29,6 +29,7 @@ public class ECLRunner {
 		dl.loadData();
 		dl.calculateECL();
 		dl.printResults(true);
+		dl.printCashFlows();
 
 	}
 

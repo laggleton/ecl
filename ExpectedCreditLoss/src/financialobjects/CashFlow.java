@@ -1,6 +1,10 @@
 package financialobjects;
 import java.util.*;
 
+import referenceobjects.BusinessDate;
+import referenceobjects.DateFormat;
+import referenceobjects.stores.FxRateStore;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
@@ -70,7 +74,7 @@ public class CashFlow implements Comparable<CashFlow>{
 		this.tradeDisbursementCurrency = tradeDisbursementCurrency;
 		if (!tradeDisbursementCurrency.equals(currency)) {
 			double fxRate = 1.0d;
-			//Get FX Rate
+			fxRate = FxRateStore.getInstance().getCurrency(getCurrency()).getFxRate(getCashFlowDate()).getRate() / FxRateStore.getInstance().getCurrency(getTradeDisbursementCurrency()).getFxRate(getCashFlowDate()).getRate();
 			tradeDisbursementAmount = fxRate * amount;
 		}
 	}
@@ -85,5 +89,39 @@ public class CashFlow implements Comparable<CashFlow>{
 			return 1;
 		}
 		return -1;
+	}
+	
+	public boolean isCashFlowInEAD() {
+		if (cashFlowDate.after(BusinessDate.getInstance().getDate())) {
+			if ((cashFlowType.equals(CashFlowType.DISBURSEMENT))
+					|| (cashFlowType.equals(CashFlowType.INTEREST))
+					|| (cashFlowType.equals(CashFlowType.REPAYMENT))
+					|| (cashFlowType.equals(CashFlowType.PREPAYMENT))) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public String toString(String delimiter) {
+		return DateFormat.ISO_FORMAT.format(getCashFlowDate())
+			+ delimiter + getCashFlowType()
+			+ delimiter + getCurrency()
+			+ delimiter + getAmount()
+			+ delimiter + getTradeDisbursementCurrency()
+			+ delimiter + getTradeDisbursementAmount()
+			+ delimiter + isCashFlowInEAD()
+			+ "\n";
+	}
+	
+	public static String getHeader(String delimiter) {
+		return "CashFlowDate"
+			+ delimiter + "CashFlowType"
+			+ delimiter + "CashFlowCurrency"
+			+ delimiter + "CashFlowAmount"
+			+ delimiter + "CommitmentCurrency"
+			+ delimiter + "CommitmentAmount"
+			+ delimiter + "IsCashFlowInEAD"
+			+ "\n";
 	}
 }
