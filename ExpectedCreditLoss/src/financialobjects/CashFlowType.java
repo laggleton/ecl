@@ -3,8 +3,16 @@ package financialobjects;
 public enum CashFlowType {
 	DISBURSEMENT,
 	REPAYMENT,
-	FEE,
+	FEF,
 	EXPENSE,
 	PREPAYMENT,
-	INTEREST
+	INTEREST,
+	XNL,
+	INT,
+	FEE,
+	EXP,
+	PRINCIPAL,
+	APP,
+	APR,
+	FF,
 }

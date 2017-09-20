@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
@@ -197,8 +198,9 @@ public class TradeLoader {
 				t.setEIR(effectiveYield);
 				t.setCountry(CountryStore.getInstance().getCountry(countryOfRisk));
 				t.setCreditRating(overallPDRating);
-				
+				t.setSovereignRiskType(sovereignRiskType);
 				t.setInitialCreditRating(initialRiskRating);
+				t.setFacilityCommitmentAmount(facilityCommitmentAmount);
 				t.setRating(ratStore.getRating(overallPDRating));
 				t.setAsOfDate(asOfDate);
 				t.setMaturityDate(maturityDate);
@@ -227,5 +229,16 @@ public class TradeLoader {
 		
 		l.info("Loaded " + tradeStore.getSize() + " trades");
 		
+	}
+	
+	/*
+	 * Assumes cash flows have been loaded
+	 */
+	public static void setFirstDisbursementCurrency() {
+		Collection<Trade> tList = TradeStore.getInstance().getAllTrades();
+		
+		for (Trade t: tList) {
+			String ccy = t.getFirstDisbursementCurrency();
+		}
 	}
 }

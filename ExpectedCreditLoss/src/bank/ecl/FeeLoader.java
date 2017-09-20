@@ -15,18 +15,18 @@ import utilities.InputHandlers;
 import utilities.Logger;
 import utilities.PreferencesStore;
 
-public class CashFlowLoader {
+public class FeeLoader {
 	private static Logger l = Logger.getInstance();
 	private static PreferencesStore ps = PreferencesStore.getInstance();
 	
 	/*
-	 * CF file structure is tab separated:
+	 * Fee file structure is tab separated:
 	 * Observation date
 	 * Maturity
 	 * Value
 	 * Rating reference
 	 */
-	public static void loadCFs() {
+	public static void loadFees() {
 		int count = 0;
 		String dealID;
 		String facID;
@@ -52,7 +52,7 @@ public class CashFlowLoader {
 		
 		try {
 			
-			fr = new FileReader(ps.getPreference(PreferencesStore.DIRECTORY) + ps.getPreference(PreferencesStore.CASHFLOW_FILE));
+			fr = new FileReader(ps.getPreference(PreferencesStore.DIRECTORY) + ps.getPreference(PreferencesStore.FEE_FILE));
 			sc = new BufferedReader(fr);
 			
 			while ((line = sc.readLine()) != null) {
@@ -62,20 +62,21 @@ public class CashFlowLoader {
 					line = sc.readLine();
 				}
 				
-				lineArray = line.split("\t");
+				lineArray = line.split(",");
 				
-				dealID = lineArray[0];
-				facID = lineArray[1];
-				bookID = lineArray[2];
-				contractReference = lineArray[3];
+				dealID = InputHandlers.cleanMe(lineArray[0]);
+				facID = InputHandlers.cleanMe(lineArray[1]);
+				bookID = InputHandlers.cleanMe(lineArray[2]);
+				contractReference = InputHandlers.cleanMe(lineArray[3]);
 				paymentDate = InputHandlers.dateMe(lineArray[4], DateFormat.ISO_FORMAT);
 				balanceSheetDate = InputHandlers.dateMe(lineArray[5], DateFormat.ISO_FORMAT);
-				cashFlowType = lineArray[6];
-				cashFlowSubType = lineArray[7];
-				currency = lineArray[8];
+				cashFlowType = InputHandlers.cleanMe(lineArray[6]);
+				cashFlowSubType = InputHandlers.cleanMe(lineArray[7]);
+				currency = InputHandlers.cleanMe(lineArray[8]);
 				amount = InputHandlers.doubleMe(lineArray[9]);
 				
 				cf = new CashFlow(currency, amount, paymentDate, cashFlowSubType);
+				
 				
 				if (tradeStore.getTrade(contractReference) != null) { 
 					tradeStore.getTrade(contractReference).addCF(cf);

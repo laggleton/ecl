@@ -3,6 +3,7 @@ working.directory=C:\\Users\\927624\\Documents\\EBRD Phase 2\\EBRD Test data\\EB
 pd.file=PDSurface.EBRD_PDSurface
 gdp.file=new_HistoricGDPGrowth.EBRD_HistoricGDPGrowth
 contract.file=ContractFDR1.EBRD_ContractFDR
+fee.file=Fees.csv
 cashflow.file=CashFlowFR2Summit.EBRD_CashFlow
 fx.file=FXRatesHistoric_USD.csv
 outputfile.delimiter=,

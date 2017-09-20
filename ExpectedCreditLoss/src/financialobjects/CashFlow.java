@@ -4,26 +4,29 @@ import java.util.*;
 import referenceobjects.BusinessDate;
 import referenceobjects.DateFormat;
 import referenceobjects.stores.FxRateStore;
+import utilities.Logger;
 
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 
 public class CashFlow implements Comparable<CashFlow>{
 	private String currency;
 	private Double amount;
-	
+	private CashFlowType cashFlowSubType;
 	private String tradeDisbursementCurrency;
 	private Double tradeDisbursementAmount;
 	
 	private Date cashFlowDate = new Date();
 	private CashFlowType cashFlowType;
-	SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-	
-	public CashFlow(String currency, Double amount, String date, CashFlowType type) {
+		
+	@Deprecated
+	/*
+	 * Should really format date before construction and not assume ISO
+	 */
+	public CashFlow(String currency, Double amount, String date, String type) {
 		this.currency = currency;
 		this.amount = amount;
 		try {
-			this.cashFlowDate = format.parse(date);
+			this.cashFlowDate = DateFormat.ISO_FORMAT.parse(date);
 		}
 		catch(ParseException pe) {
 			System.out.println("ERROR: could not parse date in string \"" +
@@ -31,7 +34,70 @@ public class CashFlow implements Comparable<CashFlow>{
 			System.out.println(pe.toString());
 			System.out.println(pe.getStackTrace());
 		}
-		this.cashFlowType = type;
+		mapCashFlowType(type);
+	}
+	
+	private void mapCashFlowType(String type) {
+		if ((type.equalsIgnoreCase("FEF")
+				|| type.equalsIgnoreCase("F/F"))) {
+			this.cashFlowType = CashFlowType.FEE;
+			this.cashFlowSubType = CashFlowType.FEF;
+		}
+		if (type.equalsIgnoreCase("APP")) {
+			this.cashFlowType = CashFlowType.FEE;
+			this.cashFlowSubType = CashFlowType.APP;
+		}
+		if (type.equalsIgnoreCase("APR")) {
+			this.cashFlowType = CashFlowType.FEE;
+			this.cashFlowSubType = CashFlowType.APR;
+		}
+		else if (type.equalsIgnoreCase("Principal")) {
+			this.cashFlowType = CashFlowType.XNL;
+			this.cashFlowSubType = CashFlowType.PRINCIPAL;
+		}
+		else if ((type.equalsIgnoreCase("Disbursement")) 
+				|| (type.equalsIgnoreCase("DISB")) 
+				|| (type.equalsIgnoreCase("XNL"))
+				|| (type.equalsIgnoreCase("RDISB"))
+				|| (type.equalsIgnoreCase("FUTURE_DISB"))) {
+			this.cashFlowType = CashFlowType.XNL;
+			this.cashFlowSubType = CashFlowType.DISBURSEMENT;
+		}
+		else if ((type.equalsIgnoreCase("Repayment")) 
+				|| (type.equalsIgnoreCase("SREP"))
+				|| (type.equalsIgnoreCase("FUTURE_SREP"))
+				|| (type.equalsIgnoreCase("RREP"))
+				|| (type.equalsIgnoreCase("ASREP"))) {
+			this.cashFlowType = CashFlowType.XNL;
+			this.cashFlowSubType = CashFlowType.REPAYMENT;
+		}
+		else if ((type.equalsIgnoreCase("Prepayment")) 
+				|| (type.equalsIgnoreCase("FUTP"))
+				|| (type.equalsIgnoreCase("APREP"))) {
+			this.cashFlowType = CashFlowType.XNL;
+			this.cashFlowSubType = CashFlowType.PREPAYMENT;
+		}
+		else if ((type.equalsIgnoreCase("Interest"))
+				|| (type.equalsIgnoreCase("INT")) ) {
+			this.cashFlowType = CashFlowType.INT;
+			this.cashFlowSubType = CashFlowType.INTEREST;
+		}
+		else if ((type.equalsIgnoreCase("Expense"))
+				|| (type.equalsIgnoreCase("EXP")) 
+				|| (type.equalsIgnoreCase("Expenses")) ) {
+			this.cashFlowType = CashFlowType.EXP;
+			this.cashFlowSubType = CashFlowType.EXPENSE;
+		}
+		else {
+			Logger.getInstance().warn("Cash Flow Type " + cashFlowType + "not recognised!");
+		}
+	}
+	
+	public CashFlow(String currency, Double amount, Date date, String type) {
+		this.currency = currency;
+		this.amount = amount;
+		this.cashFlowDate = date;
+		mapCashFlowType(type);
 	}
 
 	public String getCurrency() {
@@ -77,10 +143,21 @@ public class CashFlow implements Comparable<CashFlow>{
 			fxRate = FxRateStore.getInstance().getCurrency(getCurrency()).getFxRate(getCashFlowDate()).getRate() / FxRateStore.getInstance().getCurrency(getTradeDisbursementCurrency()).getFxRate(getCashFlowDate()).getRate();
 			tradeDisbursementAmount = fxRate * amount;
 		}
+		else {
+			tradeDisbursementAmount = amount;
+		}
 	}
 
 	public Double getTradeDisbursementAmount() {
 		return tradeDisbursementAmount;
+	}
+	
+	public CashFlowType getCashFlowSubType() {
+		return cashFlowSubType;
+	}
+
+	public void setCashFlowSubType(CashFlowType cashFlowSubType) {
+		this.cashFlowSubType = cashFlowSubType;
 	}
 
 	@Override
@@ -88,6 +165,7 @@ public class CashFlow implements Comparable<CashFlow>{
 		if (comparisonCF.getCashFlowDate().before(this.getCashFlowDate())) {
 			return 1;
 		}
+		if (comparisonCF.getCashFlowDate().equals(this.getCashFlowDate())) { return 0; }
 		return -1;
 	}
 	
@@ -101,6 +179,16 @@ public class CashFlow implements Comparable<CashFlow>{
 			}
 		}
 		return false;
+	}
+	
+	public String toDisbursementCcyFormat(String delimiter) {
+		return DateFormat.ISO_FORMAT.format(getCashFlowDate())
+			+ delimiter + DateFormat.ISO_FORMAT.format(BusinessDate.getInstance().getDate())
+			+ delimiter + getCashFlowType().toString()
+			+ delimiter + getCashFlowSubType()
+			+ delimiter + getTradeDisbursementCurrency()
+			+ delimiter + getTradeDisbursementAmount()
+			+ "\n";
 	}
 	
 	public String toString(String delimiter) {
@@ -122,6 +210,16 @@ public class CashFlow implements Comparable<CashFlow>{
 			+ delimiter + "CommitmentCurrency"
 			+ delimiter + "CommitmentAmount"
 			+ delimiter + "IsCashFlowInEAD"
+			+ "\n";
+	}
+	
+	public static String getDisbursementHeader(String delimiter) {
+		return "CashFlowDate"
+			+ delimiter + "BalanceSheetDate"
+			+ delimiter + "CashFlowType"
+			+ delimiter + "CashFlowSubType"
+			+ delimiter + "CommitmentCurrency"
+			+ delimiter + "CommitmentAmount"
 			+ "\n";
 	}
 }

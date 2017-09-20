@@ -38,9 +38,19 @@ public class Trade {
 	
 	private ECLResult eclResult;
 	private List<ECLIntermediateResult> eclIntermediateList = new ArrayList<>();
+	private String sovereignRiskType;
+	private Double facilityCommitmentAmount;
 	
 	//public Logger log = new Logger();
 	
+	public Double getFacilityCommitmentAmount() {
+		return facilityCommitmentAmount;
+	}
+
+	public void setFacilityCommitmentAmount(Double facilityCommitmentAmount) {
+		this.facilityCommitmentAmount = facilityCommitmentAmount;
+	}
+
 	public Trade(String instrumentId, String posId, String bookId, String tradeId, Integer tradeSize, String currency) {
 		this.currency = new Currency(currency);
 		this.notional = tradeSize;
@@ -388,10 +398,32 @@ public class Trade {
 		return firstDisbursementCurrency;
 	}
 	
+	public Date getFirstDisbursementDate() {
+		List<CashFlow> cfs = getCFs();
+		
+		for (CashFlow cf : cfs) {
+			if (cf.getCashFlowType().equals(CashFlowType.DISBURSEMENT)) {
+				return cf.getCashFlowDate();
+			}
+		}
+		
+		for (CashFlow cf : cfs) {
+			return cf.getCashFlowDate();
+		}
+		return getAsOfDate();
+		
+	}
+	
 	private void setFirstDisbursementCurrency() {
 		List<CashFlow> cfs = getCFs();
 		for (CashFlow cf : cfs) {
-			if (cf.getCashFlowType().equals(CashFlowType.DISBURSEMENT)) {
+			if (cf.getCashFlowSubType().equals(CashFlowType.DISBURSEMENT)) {
+				firstDisbursementCurrency = cf.getCurrency();
+				break;
+			}
+		}
+		if (null == firstDisbursementCurrency) {
+			for (CashFlow cf : cfs) {
 				firstDisbursementCurrency = cf.getCurrency();
 				break;
 			}
@@ -581,6 +613,22 @@ public class Trade {
 			+ delimiter + "RunDate"
 			+ delimiter;
 	}
+	
+	public String getAbbreviatedPrimaryKeyDecorator(String delimiter) {
+		return getDealId() 
+			+ delimiter + getFacilityId()
+			+ delimiter + getTradeIdentifier()
+			+ delimiter + getBookId()
+			+ delimiter;
+	}
+	
+	public static String getAbbreviatedPrimaryKeyHeader(String delimiter) {
+		return "DealId" 
+			+ delimiter + "FacilityId"
+			+ delimiter + "ContractReference"
+			+ delimiter + "BookId"
+			+ delimiter;
+	}
 
 	public String getDealId() {
 		return dealId;
@@ -604,6 +652,28 @@ public class Trade {
 
 	public void setBookId(String bookId) {
 		this.bookId = bookId;
+	}
+	
+	public void generateExpensesCashFlow() {
+		String currency = getFirstDisbursementCurrency();
+		Double amount = 0d;
+		if (sovereignRiskType.equals("N")) {
+			amount = 5000d;
+		}
+		else {
+			amount = 22000d;
+			amount += (facilityCommitmentAmount / 1000000d) * 450;
+		}
+		Date expensesDate = getFirstDisbursementDate();
+		
+		amount = amount * FxRateStore.getInstance().getCurrency(currency).getFxRate(expensesDate).getRate() / FxRateStore.getInstance().getCurrency("EUR").getFxRate(expensesDate).getRate();
+		CashFlow cf = new CashFlow(currency, amount, expensesDate, "Expense");
+		cfs.add(cf);		
+	}
+
+	public void setSovereignRiskType(String sovereignRiskType) {
+		this.sovereignRiskType = sovereignRiskType;
+		
 	}
 	
 }

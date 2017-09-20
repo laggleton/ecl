@@ -10,6 +10,7 @@ public class PreferencesStore {
 	private static PreferencesStore instance;
 	
 	public static final String CASHFLOW_FILE = "cashflow.file";
+	public static final String FEE_FILE = "fee.file";
 	public static final String CONTRACT_FILE = "contract.file";
 	public static final String PD_FILE = "pd.file";
 	public static final String GDP_FILE = "gdp.file";
@@ -23,6 +24,7 @@ public class PreferencesStore {
 					CASHFLOW_FILE
 					, CONTRACT_FILE
 					, PD_FILE
+					, FEE_FILE
 					, GDP_FILE
 					, DIRECTORY
 					, FX_FILE
