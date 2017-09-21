@@ -16,6 +16,7 @@ import financialobjects.CashFlowType;
 import financialobjects.Trade;
 import referenceobjects.BusinessDate;
 import referenceobjects.Country;
+import referenceobjects.DateFormat;
 import referenceobjects.GrossDomesticProduct;
 import referenceobjects.LossGivenDefault;
 import referenceobjects.ProbabilityOfDefault;
@@ -25,7 +26,6 @@ import referenceobjects.Scenario;
 public class TradeTest {
 	
 	Trade t;
-	SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
 		
 	@Test
 	public void evaluatesCalculateIncrementalPD() {
@@ -44,8 +44,8 @@ public class TradeTest {
 		setUpTestTrade();
 		Date startDate = new Date(); Date endDate = new Date();
 		try {
-			startDate = format.parse("2017-05-31");
-			endDate = format.parse("2017-08-31");
+			startDate = DateFormat.ISO_FORMAT.parse("2017-05-31");
+			endDate = DateFormat.ISO_FORMAT.parse("2017-08-31");
 		}
 		catch(ParseException pe) {
 			System.out.println("Couldn't parse date string" + pe.toString());
@@ -87,7 +87,7 @@ public class TradeTest {
 		double rate = 0.03895495d;
 		
 		try {
-			eadDate = format.parse("2017-05-31");
+			eadDate = DateFormat.ISO_FORMAT.parse("2017-05-31");
 		}
 		catch(ParseException pe) {
 			System.out.println("Couldn't parse date string" + pe.toString());
@@ -174,9 +174,9 @@ public class TradeTest {
 		t.setCreditRating("6.3");
 						
 		try {
-			BusinessDate.getInstance().initialise(format.parse("2017-05-31"));
-			t.setAsOfDate(format.parse("2017-05-31"));
-			t.setMaturityDate(format.parse("2023-02-28"));
+			BusinessDate.getInstance().initialise(DateFormat.ISO_FORMAT.parse("2017-05-31"));
+			t.setAsOfDate(DateFormat.ISO_FORMAT.parse("2017-05-31"));
+			t.setMaturityDate(DateFormat.ISO_FORMAT.parse("2023-02-28"));
 		}
 		catch (ParseException pe) {
 			System.out.println("Failed to parse date: " + pe.toString());
@@ -385,42 +385,42 @@ public class TradeTest {
 		List<ProbabilityOfDefault> pds = new ArrayList<>();
 		
 		try {
-			ProbabilityOfDefault pd = new ProbabilityOfDefault("6.3",format.parse("2017-05-31"),0.0d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2018-05-31"),0.0276d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2019-05-31"),0.0647d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2020-05-31"),0.0979d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2021-05-31"),0.1206d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2022-05-31"),0.1461d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2023-05-31"),0.1777d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2024-05-31"),0.1979d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2025-05-31"),0.219d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2026-05-31"),0.2577d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2027-05-31"),0.2577d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2028-05-31"),0.2577d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2029-05-31"),0.2577d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2030-05-31"),0.2577d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2031-05-31"),0.2577d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2032-05-31"),0.2577d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2033-05-31"),0.2577d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2034-05-31"),0.2577d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2035-05-31"),0.2577d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2036-05-31"),0.2577d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2037-05-31"),0.2577d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2038-05-31"),0.2577d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2039-05-31"),0.2577d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2040-05-31"),0.2577d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2041-05-31"),0.2577d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2042-05-31"),0.2577d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2043-05-31"),0.2577d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2044-05-31"),0.2577d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2045-05-31"),0.2577d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2046-05-31"),0.2577d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2047-05-31"),0.2577d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2048-05-31"),0.2577d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2049-05-31"),0.2577d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2050-05-31"),0.2577d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2051-05-31"),0.2577d); pds.add(pd);
-			pd = new ProbabilityOfDefault("6.3",format.parse("2052-05-31"),0.2577d); pds.add(pd);
+			ProbabilityOfDefault pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2017-05-31"),0.0d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2018-05-31"),0.0276d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2019-05-31"),0.0647d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2020-05-31"),0.0979d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2021-05-31"),0.1206d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2022-05-31"),0.1461d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2023-05-31"),0.1777d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2024-05-31"),0.1979d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2025-05-31"),0.219d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2026-05-31"),0.2577d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2027-05-31"),0.2577d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2028-05-31"),0.2577d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2029-05-31"),0.2577d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2030-05-31"),0.2577d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2031-05-31"),0.2577d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2032-05-31"),0.2577d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2033-05-31"),0.2577d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2034-05-31"),0.2577d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2035-05-31"),0.2577d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2036-05-31"),0.2577d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2037-05-31"),0.2577d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2038-05-31"),0.2577d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2039-05-31"),0.2577d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2040-05-31"),0.2577d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2041-05-31"),0.2577d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2042-05-31"),0.2577d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2043-05-31"),0.2577d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2044-05-31"),0.2577d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2045-05-31"),0.2577d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2046-05-31"),0.2577d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2047-05-31"),0.2577d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2048-05-31"),0.2577d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2049-05-31"),0.2577d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2050-05-31"),0.2577d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2051-05-31"),0.2577d); pds.add(pd);
+			pd = new ProbabilityOfDefault("6.3",DateFormat.ISO_FORMAT.parse("2052-05-31"),0.2577d); pds.add(pd);
 		}
 		catch (ParseException pe) {
 			System.out.println("Failed to parse date: " + pe.toString());

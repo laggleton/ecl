@@ -1,14 +1,15 @@
 package bank.ecl;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.util.List;
+import java.io.File;
 import java.util.Date;
+import java.util.Scanner;
 
 import referenceobjects.Currency;
 import referenceobjects.DateFormat;
 import referenceobjects.FxRate;
 import referenceobjects.stores.FxRateStore;
+import utilities.FileUtils;
 import utilities.InputHandlers;
 import utilities.Logger;
 import utilities.PreferencesStore;
@@ -19,39 +20,38 @@ public class FXRateLoader {
 	private static PreferencesStore ps = PreferencesStore.getInstance();
 
 	public static void loadFXRates() {
-		String line;
-		String[] lineArray;
+		String line = "";
+		List<String> lineArray = null;
 		boolean first = true;
 		Currency ccy;
 		String ccyName;
 		Date rateDate;
 		Double rate;
 				
-		FileReader fr = null;
-		BufferedReader sc = null;
-				
 		FxRateStore fxStore = FxRateStore.getInstance();
 		FxRate fxRate;
 		
 		int count = 1;
 		
+		String delimiter = "\t";
+		Scanner scanner = null;
+		if (null != ps.getPreference(PreferencesStore.FX_FILE_DELIMITER)) { delimiter =  ps.getPreference(PreferencesStore.FX_FILE_DELIMITER); }
+		
 		try {
 			
-			fr = new FileReader(ps.getPreference(PreferencesStore.DIRECTORY) + ps.getPreference(PreferencesStore.FX_FILE));
-			sc = new BufferedReader(fr);
-			
-			while ((line = sc.readLine()) != null) {
+			scanner = new Scanner(new File(ps.getPreference(PreferencesStore.DIRECTORY) + ps.getPreference(PreferencesStore.FX_FILE)));
+		    while (scanner.hasNext()) {
 								
+		    	line = scanner.nextLine();
 				if (first) {
 					first = false;
-					line = sc.readLine();
+					line = scanner.nextLine();
 				}
+				lineArray = FileUtils.parseLine(line, delimiter);
 				
-				lineArray = line.split(",");
-				
-				ccyName = lineArray[0];
-				rateDate = InputHandlers.dateMe(lineArray[1], DateFormat.ISO_FORMAT);
-				rate = InputHandlers.doubleMe(lineArray[2]);
+				ccyName = lineArray.get(0);
+				rateDate = InputHandlers.dateMe(lineArray.get(1), DateFormat.ISO_FORMAT);
+				rate = InputHandlers.doubleMe(lineArray.get(2));
 				
 				fxRate = new FxRate(rateDate, rate);
 				
@@ -64,13 +64,7 @@ public class FXRateLoader {
 			fe.printStackTrace();
 		}
 		finally {
-			try {
-				if (sc != null) { sc.close(); }
-				if (fr != null) { fr.close(); }
-			} 
-			catch (IOException ex) {
-				ex.printStackTrace();
-			}
+			if (null != scanner) { scanner.close(); }
 		}
 		
 		l.info("Loaded " + count + " FX Rates");

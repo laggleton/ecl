@@ -1,7 +1,8 @@
 package utilities;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import referenceobjects.DateFormat;
 
 public class Logger {
 	private static Logger instance;
@@ -11,8 +12,6 @@ public class Logger {
 	public final static int WARN = 1;
 	public final static int ERROR = 2;
 	public final static int INFO = 0;
-	
-	SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	
 	public static synchronized Logger getInstance() {
 		if (instance == null) {
@@ -38,7 +37,7 @@ public class Logger {
 	
 	private String getTimeStamp() {
 		Date d = new Date();
-		return sdf.format(d);
+		return DateFormat.OUTPUT_FORMAT.format(d);
 	}
 	
 	public void setLogLevel(int i) {

@@ -34,7 +34,7 @@ public class InputHandlers {
 	
 	public static Date dateMe(String s, SimpleDateFormat df) {
 		Date d = BusinessDate.getInstance().getDate();
-		if (s != "") {
+		if ((null != s) || (s != "")) {
 			try {
 				d = df.parse(s);
 			}	

@@ -1,11 +1,12 @@
 package bank.ecl;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.File;
+import java.util.List;
+import java.util.Scanner;
 
 import referenceobjects.GrossDomesticProduct;
 import referenceobjects.stores.CountryStore;
+import utilities.FileUtils;
 import utilities.InputHandlers;
 import utilities.Logger;
 import utilities.PreferencesStore;
@@ -23,7 +24,7 @@ public class CountryLoader {
 	 */
 	public static void loadCountries() {
 		String line = "";
-		String[] lineArray;
+		List<String> lineArray = null;
 		boolean first = true;
 		GrossDomesticProduct gdp;
 		String country;
@@ -33,33 +34,26 @@ public class CountryLoader {
 		
 		CountryStore ctryStore = CountryStore.getInstance();
 				
-		FileReader fr = null;
-		BufferedReader sc = null;
+		String delimiter = "\t";
+		Scanner scanner = null;
+		if (null != ps.getPreference(PreferencesStore.GDP_FILE_DELIMITER)) { delimiter =  ps.getPreference(PreferencesStore.GDP_FILE_DELIMITER); }
 		
 		try {
 			
-			fr = new FileReader(ps.getPreference(PreferencesStore.DIRECTORY) + ps.getPreference(PreferencesStore.GDP_FILE));
-			sc = new BufferedReader(fr);
-			
-			while ((line = sc.readLine()) != null) {
+			scanner = new Scanner(new File(ps.getPreference(PreferencesStore.DIRECTORY) + ps.getPreference(PreferencesStore.GDP_FILE)));
+		     while (scanner.hasNext()) {
 								
+		    	line = scanner.nextLine();
 				if (first) {
 					first = false;
-					line = sc.readLine();
+					line = scanner.nextLine();
 				}
+				lineArray = FileUtils.parseLine(line, delimiter);
 				
-				lineArray = line.split("\t");
-				
-				country = lineArray[0];
-				year = InputHandlers.intMe(lineArray[1]);
-				value = InputHandlers.doubleMe(lineArray[2]);
-				
-				try {
-					oneYearGrowth = InputHandlers.doubleMe(lineArray[3]);
-				}
-				catch (ArrayIndexOutOfBoundsException e) {
-					oneYearGrowth = null;
-				}
+				country = lineArray.get(0);
+				year = InputHandlers.intMe(lineArray.get(1));
+				value = InputHandlers.doubleMe(lineArray.get(2));
+				oneYearGrowth = InputHandlers.doubleMe(lineArray.get(3));
 					
 				gdp = new GrossDomesticProduct(year);
 				gdp.setActualGrowth(value);
@@ -70,17 +64,10 @@ public class CountryLoader {
 		}
 		catch (Exception fe) {
 			fe.printStackTrace();
-			ps.printAll();
 			l.error(line);
 		}
 		finally {
-			try {
-				if (sc != null) { sc.close(); }
-				if (fr != null) { fr.close(); }
-			} 
-			catch (IOException ex) {
-				ex.printStackTrace();
-			}
+			if (null != scanner) { scanner.close(); }
 		}
 		l.info("Loaded " + CountryStore.getInstance().getSize() + " countries");
 	}

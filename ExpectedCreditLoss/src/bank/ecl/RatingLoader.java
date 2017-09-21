@@ -1,17 +1,20 @@
 package bank.ecl;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.Scanner;
 
 import referenceobjects.BusinessDate;
 import referenceobjects.ProbabilityOfDefault;
 import referenceobjects.Rating;
 import referenceobjects.stores.RatingStore;
+import utilities.FileUtils;
 import utilities.InputHandlers;
 import utilities.Logger;
 import utilities.PreferencesStore;
@@ -29,8 +32,8 @@ public class RatingLoader {
 	 * Rating reference
 	 */
 	public static void loadRatings() {
-		String line;
-		String[] lineArray;
+		String line = "";
+		List<String> lineArray = null;
 		boolean first = true;
 		ProbabilityOfDefault pd;
 		Integer year;
@@ -38,28 +41,31 @@ public class RatingLoader {
 		String rating;
 		
 		Calendar gc = GregorianCalendar.getInstance();
-		FileReader fr = null;
-		BufferedReader sc = null;
 
 		Date asOfDate = BusinessDate.getInstance().getDate();
 		
 		RatingStore ratStore = RatingStore.getInstance();
+		
+		String delimiter = "\t";
+		Scanner scanner = null;
+		if (null != ps.getPreference(PreferencesStore.FX_FILE_DELIMITER)) { delimiter =  ps.getPreference(PreferencesStore.FX_FILE_DELIMITER); }
+	
 				
 		try {
 			
-			fr = new FileReader(ps.getPreference(PreferencesStore.DIRECTORY) + ps.getPreference(PreferencesStore.PD_FILE));
-			sc = new BufferedReader(fr);
-			
-			while ((line = sc.readLine()) != null) {
+			scanner = new Scanner(new File(ps.getPreference(PreferencesStore.DIRECTORY) + ps.getPreference(PreferencesStore.FX_FILE)));
+		    while (scanner.hasNext()) {
+								
+		    	line = scanner.nextLine();
 				if (first) {
 					first = false;
-					line = sc.readLine();
+					line = scanner.nextLine();
 				}
+				lineArray = FileUtils.parseLine(line, delimiter);
 				
-				lineArray = line.split("\t");
-				year = InputHandlers.intMe(lineArray[1].replaceAll("y",  ""));
-				value = InputHandlers.doubleMe(lineArray[2]);
-				rating = lineArray[3];
+				year = InputHandlers.intMe(lineArray.get(1).replaceAll("y",  ""));
+				value = InputHandlers.doubleMe(lineArray.get(2));
+				rating = lineArray.get(3);
 				
 				gc.setTime(asOfDate);
 				gc.add(Calendar.YEAR, year);
@@ -72,13 +78,7 @@ public class RatingLoader {
 			fe.printStackTrace();
 		}
 		finally {
-			try {
-				if (sc != null) { sc.close(); }
-				if (fr != null) { fr.close(); }
-			} 
-			catch (IOException ex) {
-				ex.printStackTrace();
-			}
+			if (null != scanner) { scanner.close(); }
 		}
 		
 		l.info("Loaded " + ratStore.getSize() + " ratings");

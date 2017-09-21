@@ -43,13 +43,17 @@ public class CashFlow implements Comparable<CashFlow>{
 			this.cashFlowType = CashFlowType.FEE;
 			this.cashFlowSubType = CashFlowType.FEF;
 		}
-		if (type.equalsIgnoreCase("APP")) {
+		else if (type.equalsIgnoreCase("APP")) {
 			this.cashFlowType = CashFlowType.FEE;
 			this.cashFlowSubType = CashFlowType.APP;
 		}
-		if (type.equalsIgnoreCase("APR")) {
+		else if (type.equalsIgnoreCase("APR")) {
 			this.cashFlowType = CashFlowType.FEE;
 			this.cashFlowSubType = CashFlowType.APR;
+		}
+		else if (type.equalsIgnoreCase("FEE")) {
+			this.cashFlowType = CashFlowType.FEE;
+			this.cashFlowSubType = CashFlowType.FEE;
 		}
 		else if (type.equalsIgnoreCase("Principal")) {
 			this.cashFlowType = CashFlowType.XNL;
@@ -137,10 +141,13 @@ public class CashFlow implements Comparable<CashFlow>{
 	}
 
 	public void setTradeDisbursementCurrency(String tradeDisbursementCurrency) {
+		FxRateStore fxS = FxRateStore.getInstance();
 		this.tradeDisbursementCurrency = tradeDisbursementCurrency;
 		if (!tradeDisbursementCurrency.equals(currency)) {
 			double fxRate = 1.0d;
-			fxRate = FxRateStore.getInstance().getCurrency(getCurrency()).getFxRate(getCashFlowDate()).getRate() / FxRateStore.getInstance().getCurrency(getTradeDisbursementCurrency()).getFxRate(getCashFlowDate()).getRate();
+			double flowRate = fxS.getCurrency(currency).getFxRate(this.cashFlowDate).getRate();
+			double disburseRate = fxS.getCurrency(tradeDisbursementCurrency).getFxRate(this.cashFlowDate).getRate();
+			fxRate = flowRate / disburseRate; 
 			tradeDisbursementAmount = fxRate * amount;
 		}
 		else {

@@ -14,14 +14,28 @@ public class PreferencesStore {
 	public static final String CONTRACT_FILE = "contract.file";
 	public static final String PD_FILE = "pd.file";
 	public static final String GDP_FILE = "gdp.file";
+	public static final String CASHFLOW_FILE_DELIMITER = "cashflow.file.delimiter";
+	public static final String FEE_FILE_DELIMITER = "fee.file.delimiter";
+	public static final String CONTRACT_FILE_DELIMITER = "contract.file.delimiter";
+	public static final String PD_FILE_DELIMITER = "pd.file.delimiter";
+	public static final String GDP_FILE_DELIMITER = "gdp.file.delimiter";
+	public static final String FX_FILE_DELIMITER = "fx.file.delimiter";
 	public static final String FX_FILE = "fx.file";
 	public static final String DIRECTORY = "working.directory";
 	public static final String BUSINESS_DATE = "business.date";
 	public static final String OUTPUT_DELIMITER = "outputfile.delimiter";
+	public static final String LOGGER_LEVEL = "logger.level";
 		
 	private static final List<String> prefList = new ArrayList<>(
 			Arrays.asList(
 					CASHFLOW_FILE
+					, CASHFLOW_FILE_DELIMITER
+					, FEE_FILE_DELIMITER
+					, FX_FILE_DELIMITER
+					, CONTRACT_FILE_DELIMITER
+					, PD_FILE_DELIMITER
+					, GDP_FILE_DELIMITER
+					, LOGGER_LEVEL
 					, CONTRACT_FILE
 					, PD_FILE
 					, FEE_FILE

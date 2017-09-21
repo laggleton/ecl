@@ -6,9 +6,10 @@ import java.io.IOException;
 import java.util.Date;
 
 import financialobjects.CashFlow;
+import financialobjects.CashFlowType;
 import financialobjects.Trade;
+import financialobjects.stores.TradeStore;
 import referenceobjects.DateFormat;
-import referenceobjects.stores.TradeStore;
 import utilities.Logger;
 import utilities.PreferencesLoader;
 import utilities.PreferencesStore;
@@ -33,6 +34,7 @@ public class FXConverter {
 		
 		PreferencesLoader pl = new PreferencesLoader(preferencesFile);
 		pl.load();
+		l.setLogLevel(1);
 		
 		BusinessDateLoader.loadAsOfDateFromPreferences();
 		FXRateLoader.loadFXRates();
@@ -47,6 +49,10 @@ public class FXConverter {
 	}
 	
 	public static void printCashFlows() {
+		printCashFlows(null);
+	}
+	
+	public static void printCashFlows(CashFlowType type) {
 		String delimiter = PreferencesStore.getInstance().getPreference(PreferencesStore.OUTPUT_DELIMITER);
 		try {
 			Date d = new Date();
@@ -69,6 +75,7 @@ public class FXConverter {
 			for (Trade t : TradeStore.getInstance().getAllTrades()) {
 				tradeDecorator = t.getAbbreviatedPrimaryKeyDecorator(delimiter);
 				for (CashFlow cf : t.getCashFlows()) {
+					if (null != type) { if (!cf.getCashFlowSubType().equals(type)) { continue; }}
 					cashFlowWriter.write(tradeDecorator + cf.toDisbursementCcyFormat(delimiter));
 				}
 			}

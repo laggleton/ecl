@@ -1,16 +1,15 @@
 package bank.ecl;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Scanner;
 
 import financialobjects.CashFlow;
-import financialobjects.CashFlowType;
+import financialobjects.stores.TradeStore;
 import referenceobjects.DateFormat;
-import referenceobjects.stores.TradeStore;
+import utilities.FileUtils;
 import utilities.InputHandlers;
 import utilities.Logger;
 import utilities.PreferencesStore;
@@ -20,7 +19,7 @@ public class FeeLoader {
 	private static PreferencesStore ps = PreferencesStore.getInstance();
 	
 	/*
-	 * Fee file structure is tab separated:
+	 * Fee file structure is comma separated:
 	 * Observation date
 	 * Maturity
 	 * Value
@@ -39,41 +38,40 @@ public class FeeLoader {
 		String currency;
 		Double amount;
 		String line = "";
-		String[] lineArray;
+		List<String> lineArray = null;
 		boolean first = true;
 		
 		List<String> missingTrades = new ArrayList<>();
 		
 		CashFlow cf;
+		String delimiter = ",";
+		Scanner scanner = null;
+		if (null != ps.getPreference(PreferencesStore.FEE_FILE_DELIMITER)) { delimiter =  ps.getPreference(PreferencesStore.FEE_FILE_DELIMITER); }
 				
-		FileReader fr = null;
-		BufferedReader sc = null;
 		TradeStore tradeStore = TradeStore.getInstance();
 		
 		try {
 			
-			fr = new FileReader(ps.getPreference(PreferencesStore.DIRECTORY) + ps.getPreference(PreferencesStore.FEE_FILE));
-			sc = new BufferedReader(fr);
-			
-			while ((line = sc.readLine()) != null) {
+			scanner = new Scanner(new File(ps.getPreference(PreferencesStore.DIRECTORY) + ps.getPreference(PreferencesStore.FEE_FILE)));
+		     while (scanner.hasNext()) {
 								
+		    	line = scanner.nextLine();
 				if (first) {
 					first = false;
-					line = sc.readLine();
+					line = scanner.nextLine();
 				}
+				lineArray = FileUtils.parseLine(line, delimiter);
 				
-				lineArray = line.split(",");
-				
-				dealID = InputHandlers.cleanMe(lineArray[0]);
-				facID = InputHandlers.cleanMe(lineArray[1]);
-				bookID = InputHandlers.cleanMe(lineArray[2]);
-				contractReference = InputHandlers.cleanMe(lineArray[3]);
-				paymentDate = InputHandlers.dateMe(lineArray[4], DateFormat.ISO_FORMAT);
-				balanceSheetDate = InputHandlers.dateMe(lineArray[5], DateFormat.ISO_FORMAT);
-				cashFlowType = InputHandlers.cleanMe(lineArray[6]);
-				cashFlowSubType = InputHandlers.cleanMe(lineArray[7]);
-				currency = InputHandlers.cleanMe(lineArray[8]);
-				amount = InputHandlers.doubleMe(lineArray[9]);
+				dealID = InputHandlers.cleanMe(lineArray.get(0));
+				facID = InputHandlers.cleanMe(lineArray.get(1));
+				bookID = InputHandlers.cleanMe(lineArray.get(2));
+				contractReference = InputHandlers.cleanMe(lineArray.get(3));
+				paymentDate = InputHandlers.dateMe(lineArray.get(4), DateFormat.ISO_FORMAT);
+				balanceSheetDate = InputHandlers.dateMe(lineArray.get(5), DateFormat.ISO_FORMAT);
+				cashFlowType = InputHandlers.cleanMe(lineArray.get(6));
+				cashFlowSubType = InputHandlers.cleanMe(lineArray.get(7));
+				currency = InputHandlers.cleanMe(lineArray.get(8));
+				amount = InputHandlers.doubleMe(lineArray.get(9));
 				
 				cf = new CashFlow(currency, amount, paymentDate, cashFlowSubType);
 				
@@ -95,17 +93,11 @@ public class FeeLoader {
 			l.error(line);
 		}
 		finally {
-			try {
-				if (sc != null) { sc.close(); }
-				if (fr != null) { fr.close(); }
-			} 
-			catch (IOException ex) {
-				ex.printStackTrace();
-			}
+			if (null != scanner) { scanner.close(); }
 		}
 		
 		for (String t : missingTrades) {
-			l.warn("No trade data for cash flows, contractref " + t);
+			l.info("No trade data for cash flows, contractref " + t);
 		}
 		l.warn("Missing trade data for " + missingTrades.size());
 		

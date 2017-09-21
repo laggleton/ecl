@@ -35,7 +35,7 @@ public class PreferencesLoader {
 			sc = new BufferedReader(fr);
 			
 			while ((line = sc.readLine()) != null) {
-			
+				if (line.startsWith("//")) { continue; }
 				lineArray = line.split("=");
 				
 				key = InputHandlers.cleanMe(lineArray[0]);

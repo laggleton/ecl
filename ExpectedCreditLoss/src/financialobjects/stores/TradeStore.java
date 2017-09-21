@@ -1,4 +1,4 @@
-package referenceobjects.stores;
+package financialobjects.stores;
 
 import java.util.Collection;
 import java.util.HashMap;

@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import utilities.Logger;
+
 public class Currency {
 	
 	private List<FxRate> fxRates = new ArrayList<>();
@@ -36,12 +38,15 @@ public class Currency {
 	}
 	
 	public FxRate getFxRate(Date d) {
+		FxRate g = null;
 		for (FxRate f : getFxRates()) {
 			if (f.getRateDate().equals(d) || f.getRateDate().after(d)) {
 				return f;
 			}
+			g = f;
 		}
-		return null;
+		Logger.getInstance().info("No FxRate for currency " + ccyName + " at Date " + DateFormat.ISO_FORMAT.format(d) + " returning latest rate");
+		return g;
 	}
 	
 }

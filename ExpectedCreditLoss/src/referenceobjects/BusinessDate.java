@@ -8,8 +8,7 @@ import utilities.Logger;
 public class BusinessDate {
 	private static BusinessDate instance = new BusinessDate();
 	private boolean initialised = false;
-	SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd");
-	
+		
 	private Date d;
 	
 	private BusinessDate() {};
@@ -25,10 +24,11 @@ public class BusinessDate {
 	
 	public void initialise(String asOfDate) {
 		try {
-			d = isoFormat.parse(asOfDate);
+			d = DateFormat.ISO_FORMAT.parse(asOfDate);
 		}
 		catch (Exception e) {
 			Logger.getInstance().error(e);
+			Logger.getInstance().error("Couldn't parse string " + asOfDate + " should be in ISO format yyyy-MM-dd");
 		}
 		initialised = true;
 	}
