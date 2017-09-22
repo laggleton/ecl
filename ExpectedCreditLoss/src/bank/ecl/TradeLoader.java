@@ -199,7 +199,7 @@ public class TradeLoader {
 				
 				t = new Trade(dealId, facilityId, bookID, contractReference, principal.intValue(), currency);
 				
-			//	t.setEIR(effectiveYield);
+				t.setEIR(effectiveYield);
 				t.setCountry(CountryStore.getInstance().getCountry(countryOfRisk));
 				t.setCreditRating(overallPDRating);
 				t.setSovereignRiskType(sovereignRiskType);
@@ -238,7 +238,7 @@ public class TradeLoader {
 		Collection<Trade> tList = TradeStore.getInstance().getAllTrades();
 		
 		for (Trade t: tList) {
-			String ccy = t.getFirstDisbursementCurrency();
+			t.setFirstDisbursementCurrency();
 		}
 	}
 }

@@ -414,7 +414,7 @@ public class Trade {
 		
 	}
 	
-	private void setFirstDisbursementCurrency() {
+	public void setFirstDisbursementCurrency() {
 		List<CashFlow> cfs = getCFs();
 		for (CashFlow cf : cfs) {
 			if (cf.getCashFlowSubType().equals(CashFlowType.DISBURSEMENT)) {
