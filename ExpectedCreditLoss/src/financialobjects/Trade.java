@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 import referenceobjects.*;
 import referenceobjects.Currency;
 import referenceobjects.stores.FxRateStore;
+import utilities.DateTimeUtils;
 import utilities.Logger;
 
 public class Trade {
@@ -41,7 +42,7 @@ public class Trade {
 	private String sovereignRiskType;
 	private Double facilityCommitmentAmount;
 	
-	//public Logger log = new Logger();
+	public Logger l = Logger.getInstance();
 	
 	public Double getFacilityCommitmentAmount() {
 		return facilityCommitmentAmount;
@@ -585,6 +586,11 @@ public class Trade {
 		
 	}
 	
+	public String toString() {
+		return "Id: " + this.getTradeIdentifier() + ", country: " + this.getCountry() + ", rating: " + this.getCreditRating() + ", cfs:" + cfs.size();
+		
+	}
+	
 	public ECLResult getECLResult() {
 		return eclResult;
 	}
@@ -674,6 +680,87 @@ public class Trade {
 	public void setSovereignRiskType(String sovereignRiskType) {
 		this.sovereignRiskType = sovereignRiskType;
 		
+	}
+	
+	public void generateDailyInterest() {
+		if (cfs.isEmpty()) { l.error("No cash flows loaded, cannot generate Daily Interest for Trade " + toString()); return; }
+		
+		String currency = getFirstDisbursementCurrency();
+		Date startDate = getFirstDisbursementDate();
+		Date previousCouponDate = startDate;
+		int couponFrequency = 90;
+		Double couponAmount = 100000d;
+		Double dailyInterest = 0d;
+		Calendar gc = new GregorianCalendar();
+		gc.setTime(startDate);
+		
+		Calendar couponCalendar = gc;
+		couponCalendar.add(Calendar.DATE, couponFrequency);
+		Date couponDate = couponCalendar.getTime();
+		
+		while (gc.getTime().before(maturityDate)) {
+			gc.add(Calendar.DATE, 1);
+			Date flowDate = gc.getTime();
+			if (flowDate.before(couponDate)) {
+				dailyInterest = -1d * couponAmount * ((double) DateTimeUtils.getDateDiff(previousCouponDate, flowDate, TimeUnit.DAYS)) / couponFrequency;
+			}
+			else {
+				dailyInterest = -1d * couponAmount;
+				previousCouponDate = couponDate;
+				couponCalendar.add(Calendar.DATE, couponFrequency); 
+				couponDate = couponCalendar.getTime();
+			}
+			
+			CashFlow cf = new CashFlow(currency, dailyInterest, flowDate, "INTEREST");
+			cfs.add(cf);
+		}
+		
+		Collections.sort(cfs);
+ 	}
+	
+	public Double getAccruedInterestForDate(Date d) {
+		Double accruedInterest = 0d;
+		for (CashFlow cf : cfs) {
+			if (cf.getCashFlowDate().after(d)) {
+				break;
+			}
+			if (cf.getCashFlowType().equals(CashFlowType.INT)) {
+				accruedInterest += cf.getTradeDisbursementAmount();
+			}
+		}
+		return accruedInterest;
+	}
+	
+	public Double calculateEIR() {
+		Double amortisedCost = 1000d;
+		Double eir = 3.0d;
+		Double previousEir = 3.0d;
+		Double twoPreviousEir = 6.0d;
+		int count = 0;
+		List<CashFlow> cfList = new ArrayList<>(cfs);
+		Collections.reverse(cfList);
+		Double step = 0.001d;
+		while ((amortisedCost > 0.1) || (amortisedCost < -0.1)) {
+			List<CashFlow> reversedList = new ArrayList<>(cfList);
+			amortisedCost = calculateEIR(reversedList, eir);
+			l.info("Amortised cost = " + amortisedCost + ", eir = " + eir);
+			eir = (amortisedCost > 0) ? eir + step : eir - step;
+			count++;
+			if (twoPreviousEir.equals(eir)) { step /= 10d; }
+			twoPreviousEir = previousEir;
+			previousEir = eir;
+		}
+		l.info("Count to calculate eir = " + count);
+		return eir;
+	}
+	
+	public Double calculateEIR(List<CashFlow> cfList, Double eir) {
+		if (cfList.isEmpty()) { return 0d; }
+		CashFlow cf = cfList.remove(0);
+		if (cf.getCashFlowDate().equals(getFirstDisbursementDate())) {
+			return cf.getAmount();
+		}
+		return cf.getAmount() + (calculateEIR(cfList, eir) * (1 + eir/365d));
 	}
 	
 }

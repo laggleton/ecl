@@ -40,6 +40,16 @@ public class TradeTest {
 	}
 	
 	@Test
+	public void evaluatesGenerateEIR() {
+		setUpTestTrade();
+		t.generateDailyInterest();
+		Double eir = t.calculateEIR();
+		Double expectedResult = 1.0d;
+		
+		assertEquals(expectedResult, eir);
+	}
+	
+	@Test
 	public void evaluatesCalculateDiscountFactor() {
 		setUpTestTrade();
 		Date startDate = new Date(); Date endDate = new Date();
