@@ -22,10 +22,12 @@ import referenceobjects.LossGivenDefault;
 import referenceobjects.ProbabilityOfDefault;
 import referenceobjects.Rating;
 import referenceobjects.Scenario;
+import utilities.Logger;
 
 public class TradeTest {
 	
 	Trade t;
+	Logger l = Logger.getInstance();
 		
 	@Test
 	public void evaluatesCalculateIncrementalPD() {
@@ -42,11 +44,16 @@ public class TradeTest {
 	@Test
 	public void evaluatesGenerateEIR() {
 		setUpTestTrade();
-		t.generateDailyInterest();
+		Date startTime = new Date();
+		//t.generateDailyInterest();
 		Double eir = t.calculateEIR();
-		Double expectedResult = 1.0d;
+		Date endTime = new Date();
+		long diff = endTime.getTime() - startTime.getTime();
+		l.info("Start Time for generateEIR " + startTime.getTime() + ", endTime for generateEIR " + endTime.getTime() + ", diff " + diff + ", value = " + eir);
 		
-		assertEquals(expectedResult, eir);
+		Double expectedResult = new Double(0.9945659d);
+		//printAllCashFlows();
+		assertEquals(expectedResult, eir, 0.001);
 	}
 	
 	@Test
@@ -58,7 +65,7 @@ public class TradeTest {
 			endDate = DateFormat.ISO_FORMAT.parse("2017-08-31");
 		}
 		catch(ParseException pe) {
-			System.out.println("Couldn't parse date string" + pe.toString());
+			l.info("Couldn't parse date string" + pe.toString());
 			pe.printStackTrace();
 		}
 		double rate = 0.03895495d;
@@ -100,7 +107,7 @@ public class TradeTest {
 			eadDate = DateFormat.ISO_FORMAT.parse("2017-05-31");
 		}
 		catch(ParseException pe) {
-			System.out.println("Couldn't parse date string" + pe.toString());
+			l.info("Couldn't parse date string" + pe.toString());
 			pe.printStackTrace();
 		}
 		
@@ -119,8 +126,8 @@ public class TradeTest {
 		t.calculateECL(s); //quarterly
 		Date endTime = new Date();
 		long diff = endTime.getTime() - startTime.getTime();
-		System.out.println("Start Time for quarterly ECL " + startTime.getTime() + ", endTime for ECL " + endTime.getTime() + ", diff " + diff + ", value = " + t.getECLResult().getTwelveMonthECL());
-		Double expectedResult = new Double(546418d);
+		l.info("Start Time for quarterly ECL " + startTime.getTime() + ", endTime for ECL " + endTime.getTime() + ", diff " + diff + ", value = " + t.getECLResult().getTwelveMonthECL());
+		Double expectedResult = new Double(742119d);
 		assertEquals(expectedResult, t.getECLResult().getTwelveMonthECL(), 2.0d);
 	}
 	
@@ -133,9 +140,9 @@ public class TradeTest {
 		t.calculateECL(s, 30.4375d); //monthly
 		Date endTime = new Date();
 		long diff = endTime.getTime() - startTime.getTime();
-		System.out.println("Start Time for monthly ECL " + startTime.getTime() + ", endTime for ECL " + endTime.getTime() + ", diff " + diff + ", value = " + t.getECLResult().getTwelveMonthECL());
+		l.info("Start Time for monthly ECL " + startTime.getTime() + ", endTime for ECL " + endTime.getTime() + ", diff " + diff + ", value = " + t.getECLResult().getTwelveMonthECL());
 		
-		Double expectedResult = new Double(555473d);
+		Double expectedResult = new Double(620005d);
 		assertEquals(expectedResult, t.getECLResult().getTwelveMonthECL(), 2.0d);
 	}
 	
@@ -148,18 +155,12 @@ public class TradeTest {
 		t.calculateECL(s, 1.0d); //monthly
 		Date endTime = new Date();
 		long diff = endTime.getTime() - startTime.getTime();
-		System.out.println("Start Time for daily ECL " + startTime.getTime() + ", endTime for ECL " + endTime.getTime() + ", diff " + diff + ", value = " + t.getECLResult().getTwelveMonthECL());
+		l.info("Start Time for daily ECL " + startTime.getTime() + ", endTime for ECL " + endTime.getTime() + ", diff " + diff + ", value = " + t.getECLResult().getTwelveMonthECL());
 		
-		Double expectedResult = new Double(560033d);
+		Double expectedResult = new Double(562184d);
 		assertEquals(expectedResult, t.getECLResult().getTwelveMonthECL(), 2.0d);
 	}
-	
-
-	@Test
-	public void evaluateCalculateEIR() {
-		//TODO
-	}
-	
+		
 	@Test
 	public void evaluateGetDiscountFactor() {
 		//TODO
@@ -197,6 +198,7 @@ public class TradeTest {
 		setUpPDs();
 		setUpLGDs();
 		setUpGrowthData();
+		t.setFirstDisbursementCurrency();
 	}
 	
 	@Test
@@ -246,6 +248,63 @@ public class TradeTest {
 	}
 
 	private List<CashFlow> setUpCashFlows() {
+		String ccy = "EUR";
+		List<CashFlow> cfs = new ArrayList<>();
+		CashFlow cf;
+		try {
+			cf = new CashFlow(ccy,-7018681.75d,DateFormat.DMY_FORMAT.parse("22/08/2011"),"Principal"); cfs.add(cf);
+			cf = new CashFlow(ccy,334222.95d,DateFormat.DMY_FORMAT.parse("21/02/2012"),"Principal"); cfs.add(cf);
+			cf = new CashFlow(ccy,334222.95d,DateFormat.DMY_FORMAT.parse("21/08/2012"),"Principal"); cfs.add(cf);
+			cf = new CashFlow(ccy,334222.95d,DateFormat.DMY_FORMAT.parse("21/02/2013"),"Principal"); cfs.add(cf);
+			cf = new CashFlow(ccy,334222.95d,DateFormat.DMY_FORMAT.parse("21/08/2013"),"Principal"); cfs.add(cf);
+			cf = new CashFlow(ccy,334222.95d,DateFormat.DMY_FORMAT.parse("21/02/2014"),"Principal"); cfs.add(cf);
+			cf = new CashFlow(ccy,334222.95d,DateFormat.DMY_FORMAT.parse("21/08/2014"),"Principal"); cfs.add(cf);
+			cf = new CashFlow(ccy,334222.95d,DateFormat.DMY_FORMAT.parse("23/02/2015"),"Principal"); cfs.add(cf);
+			cf = new CashFlow(ccy,334222.95d,DateFormat.DMY_FORMAT.parse("21/08/2015"),"Principal"); cfs.add(cf);
+			cf = new CashFlow(ccy,334222.95d,DateFormat.DMY_FORMAT.parse("22/02/2016"),"Principal"); cfs.add(cf);
+			cf = new CashFlow(ccy,334222.95d,DateFormat.DMY_FORMAT.parse("22/08/2016"),"Principal"); cfs.add(cf);
+			cf = new CashFlow(ccy,334222.95d,DateFormat.DMY_FORMAT.parse("21/02/2017"),"Principal"); cfs.add(cf);
+			cf = new CashFlow(ccy,370066.17d,DateFormat.DMY_FORMAT.parse("21/08/2017"),"Principal"); cfs.add(cf);
+			cf = new CashFlow(ccy,405269.61d,DateFormat.DMY_FORMAT.parse("21/02/2018"),"Principal"); cfs.add(cf);
+			cf = new CashFlow(ccy,394593.47d,DateFormat.DMY_FORMAT.parse("21/08/2018"),"Principal"); cfs.add(cf);
+			cf = new CashFlow(ccy,386149.66d,DateFormat.DMY_FORMAT.parse("21/02/2019"),"Principal"); cfs.add(cf);
+			cf = new CashFlow(ccy,376231.24d,DateFormat.DMY_FORMAT.parse("21/08/2019"),"Principal"); cfs.add(cf);
+			cf = new CashFlow(ccy,367925.68d,DateFormat.DMY_FORMAT.parse("21/02/2020"),"Principal"); cfs.add(cf);
+			cf = new CashFlow(ccy,358863.26d,DateFormat.DMY_FORMAT.parse("21/08/2020"),"Principal"); cfs.add(cf);
+			cf = new CashFlow(ccy,350640.16d,DateFormat.DMY_FORMAT.parse("22/02/2021"),"Principal"); cfs.add(cf);
+			cf = new CashFlow(ccy,332490.05d,DateFormat.DMY_FORMAT.parse("23/08/2021"),"Principal"); cfs.add(cf);
+			cf = new CashFlow(ccy,5000.00d,DateFormat.DMY_FORMAT.parse("22/08/2011"),"Fee"); cfs.add(cf);
+			cf = new CashFlow(ccy,142249.38d,DateFormat.DMY_FORMAT.parse("21/02/2012"),"Interest"); cfs.add(cf);
+			cf = new CashFlow(ccy,104219.63d,DateFormat.DMY_FORMAT.parse("21/08/2012"),"Interest"); cfs.add(cf);
+			cf = new CashFlow(ccy,76500.59d,DateFormat.DMY_FORMAT.parse("21/02/2013"),"Interest"); cfs.add(cf);
+			cf = new CashFlow(ccy,63730.80d,DateFormat.DMY_FORMAT.parse("21/08/2013"),"Interest"); cfs.add(cf);
+			cf = new CashFlow(ccy,60752.22d,DateFormat.DMY_FORMAT.parse("21/02/2014"),"Interest"); cfs.add(cf);
+			cf = new CashFlow(ccy,57429.30d,DateFormat.DMY_FORMAT.parse("21/08/2014"),"Interest"); cfs.add(cf);
+			cf = new CashFlow(ccy,52892.45d,DateFormat.DMY_FORMAT.parse("23/02/2015"),"Interest"); cfs.add(cf);
+			cf = new CashFlow(ccy,43623.06d,DateFormat.DMY_FORMAT.parse("21/08/2015"),"Interest"); cfs.add(cf);
+			cf = new CashFlow(ccy,40011.68d,DateFormat.DMY_FORMAT.parse("22/02/2016"),"Interest"); cfs.add(cf);
+			cf = new CashFlow(ccy,32969.09d,DateFormat.DMY_FORMAT.parse("22/08/2016"),"Interest"); cfs.add(cf);
+			cf = new CashFlow(ccy,29135.58d,DateFormat.DMY_FORMAT.parse("21/02/2017"),"Interest"); cfs.add(cf);
+			cf = new CashFlow(ccy,16280.41d,DateFormat.DMY_FORMAT.parse("07/10/2017"),"Interest"); cfs.add(cf);
+			cf = new CashFlow(ccy,14320.45d,DateFormat.DMY_FORMAT.parse("07/04/2018"),"Interest"); cfs.add(cf);
+			cf = new CashFlow(ccy,12361.52d,DateFormat.DMY_FORMAT.parse("08/10/2018"),"Interest"); cfs.add(cf);
+			cf = new CashFlow(ccy,10355.67d,DateFormat.DMY_FORMAT.parse("08/04/2019"),"Interest"); cfs.add(cf);
+			cf = new CashFlow(ccy,8470.76d,DateFormat.DMY_FORMAT.parse("07/10/2019"),"Interest"); cfs.add(cf);
+			cf = new CashFlow(ccy,6605.22d,DateFormat.DMY_FORMAT.parse("07/04/2020"),"Interest"); cfs.add(cf);
+			cf = new CashFlow(ccy,4762.14d,DateFormat.DMY_FORMAT.parse("07/10/2020"),"Interest"); cfs.add(cf);
+			cf = new CashFlow(ccy,2983.60d,DateFormat.DMY_FORMAT.parse("07/04/2021"),"Interest"); cfs.add(cf);
+			cf = new CashFlow(ccy,1257.09d,DateFormat.DMY_FORMAT.parse("07/10/2021"),"Interest"); cfs.add(cf);
+		}
+		catch (ParseException pe) {
+			l.error(pe);
+			l.error("Failed to parse date in DMY_FORMAT");
+		}
+		Collections.sort(cfs);
+		
+		return cfs;
+	}
+	
+	private List<CashFlow> setUpCashFlows2() {
 		String ccy = "EUR";
 		List<CashFlow> cfs = new ArrayList<>();
 		CashFlow cf;
@@ -385,7 +444,6 @@ public class TradeTest {
 		cf = new CashFlow(ccy,60745.05907d,"2022-06-07","INTEREST"); cfs.add(cf);
 		cf = new CashFlow(ccy,3949355.33d,"2022-08-31","REPAYMENT"); cfs.add(cf);
 		cf = new CashFlow(ccy,18394.2577d,"2022-12-07","INTEREST"); cfs.add(cf);
-		cf = new CashFlow(ccy,0d,"2023-02-28","INTEREST"); cfs.add(cf);
 		Collections.sort(cfs);
 		
 		return cfs;
@@ -446,5 +504,15 @@ public class TradeTest {
 		List<LossGivenDefault> lgds = new ArrayList<>();
 		lgds.add(lgd);
 		t.setLgds(lgds);
+	}
+	
+	private void printAllCashFlows() {
+		String delimiter = ",";
+		String decorator = t.getPrimaryKeyDecorator(delimiter);
+		System.out.print(Trade.getPrimaryKeyHeader(delimiter) + CashFlow.getHeader(delimiter));
+		
+		for (CashFlow cf : t.getCfs()) {
+			System.out.print(decorator + cf.toString(delimiter));
+		}
 	}
 }

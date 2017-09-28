@@ -8,7 +8,7 @@ import utilities.Logger;
 
 import java.text.ParseException;
 
-public class CashFlow implements Comparable<CashFlow>{
+public class CashFlow implements Comparable<CashFlow>, Cloneable {
 	private String currency;
 	private Double amount;
 	private CashFlowType cashFlowSubType;
@@ -17,6 +17,7 @@ public class CashFlow implements Comparable<CashFlow>{
 	
 	private Date cashFlowDate = new Date();
 	private CashFlowType cashFlowType;
+	private Logger l = Logger.getInstance();
 		
 	@Deprecated
 	/*
@@ -141,8 +142,12 @@ public class CashFlow implements Comparable<CashFlow>{
 	}
 
 	public void setTradeDisbursementCurrency(String tradeDisbursementCurrency) {
-		FxRateStore fxS = FxRateStore.getInstance();
 		this.tradeDisbursementCurrency = tradeDisbursementCurrency;
+		updateTradeDisbursementAmount();
+	}
+	
+	public void updateTradeDisbursementAmount() {
+		FxRateStore fxS = FxRateStore.getInstance();
 		if (!tradeDisbursementCurrency.equals(currency)) {
 			double fxRate = 1.0d;
 			double flowRate = fxS.getCurrency(currency).getFxRate(this.cashFlowDate).getRate();
@@ -156,7 +161,12 @@ public class CashFlow implements Comparable<CashFlow>{
 	}
 
 	public Double getTradeDisbursementAmount() {
+		if (null == tradeDisbursementAmount) { updateTradeDisbursementAmount(); }
 		return tradeDisbursementAmount;
+	}
+	
+	public void setTradeDisbursementAmount(Double amt) {
+		this.tradeDisbursementAmount = amt;
 	}
 	
 	public CashFlowType getCashFlowSubType() {
@@ -229,4 +239,12 @@ public class CashFlow implements Comparable<CashFlow>{
 			+ delimiter + "CommitmentAmount"
 			+ "\n";
 	}
+	
+	
+	public CashFlow clone() {
+		CashFlow cf = new CashFlow(this.currency, this.amount, this.cashFlowDate, this.cashFlowSubType.toString());
+		cf.setTradeDisbursementCurrency(getTradeDisbursementCurrency());
+		return cf;
+    }
+	
 }

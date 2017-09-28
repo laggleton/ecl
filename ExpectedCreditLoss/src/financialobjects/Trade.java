@@ -18,8 +18,9 @@ public class Trade {
 	private Integer notional;
 	private Currency currency;
 	private List<CashFlow> cfs = new ArrayList<>();
+	private List<CashFlow> reversedCFs = new ArrayList<>();
 	private List<LossGivenDefault> lgds = new ArrayList<>();
-	private double EIR = 0d; //used if EIR imported not calculated
+	private Double EIR = 0d; //used if EIR imported not calculated
 	
 	private Rating rating;
 	private String creditRating; // should come from cpty or guarantor?
@@ -34,7 +35,7 @@ public class Trade {
 	private Date maturityDate;
 	private Date asOfDate;
 	private boolean impaired = false;
-	
+		
 	private String firstDisbursementCurrency;
 	
 	private ECLResult eclResult;
@@ -43,6 +44,8 @@ public class Trade {
 	private Double facilityCommitmentAmount;
 	
 	public Logger l = Logger.getInstance();
+	private Date firstDisbursementDate = null;
+	private Date lastDisbursementDate = null;
 	
 	public Double getFacilityCommitmentAmount() {
 		return facilityCommitmentAmount;
@@ -74,6 +77,16 @@ public class Trade {
 			}
 		}
 		return futCFs;
+	}
+	
+	public List<CashFlow> getInterestCashFlows() {
+		List<CashFlow> intCFs = new ArrayList<>();
+		for (CashFlow cf : cfs) {
+			if (cf.getCashFlowType().equals(CashFlowType.INT)) {
+				intCFs.add(cf);
+			}
+		}
+		return intCFs;
 	}
 	
 	public int assessIFRS9Staging() {
@@ -183,7 +196,8 @@ public class Trade {
 		Double lastPD = new Double (0d);
 		Double incrementalPD = new Double (0d);
 		Double lgd = new Double (0d);
-		Date periodDate;
+		Date periodEndDate;
+		Date periodStartDate = asOfDate;
 		Calendar gc;
 	
 		Double discountFactor = new Double(0d);
@@ -195,28 +209,28 @@ public class Trade {
 		gc.setTime(asOfDate);
 		gc.add(Calendar.YEAR, 1);
 		Date oneYearDate = gc.getTime();
-		
+				
 		for (int i = 1; i <= periods; i++) {
-			daysFromAsOf = (int) (i * periodLength);
 			
 			gc.setTime(asOfDate);
+			daysFromAsOf = (int) (i * periodLength);
 			gc.add(Calendar.DATE, daysFromAsOf);
-			periodDate = gc.getTime();
+			periodEndDate = gc.getTime();
 			
-			if (periodDate.after(maturityDate)) { periodDate = maturityDate; }
+			if (periodEndDate.after(maturityDate)) { periodEndDate = maturityDate; }
 			
 			ECLIntermediateResult e = new ECLIntermediateResult(dealId, facilityId, bookId, tradeIdentifier, getFirstDisbursementCurrency());
 			
-			discountFactor = getDiscountFactor(asOfDate, periodDate, eir);
-			ead = calculateEAD(periodDate, cfs, eir);
+			discountFactor = getDiscountFactor(asOfDate, periodStartDate, eir);
+			ead = calculateEAD(periodStartDate, cfs, eir);
 			
-			pd = calculateAbsolutePD(asOfDate, periodDate, pds);
+			pd = calculateAbsolutePD(asOfDate, periodEndDate, pds);
 			incrementalPD = calculateIncrementalPD(lastPD, pd);
 			lgd = calculateLGD(lgds);
 			
 			periodECL = discountFactor * ead * incrementalPD * lgd;
 			
-			e.setPeriodDate(periodDate);
+			e.setPeriodDate(periodStartDate);
 			e.setEad(ead);
 			e.setDiscountFactor(discountFactor);
 			e.setProbabilityOfDefault(pd);
@@ -230,13 +244,14 @@ public class Trade {
 			
 			if (twelveMonthECLCheck)  {
 				
-				if (periodDate.equals(oneYearDate) || periodDate.after(oneYearDate)) { 
+				if (periodStartDate.equals(oneYearDate) || periodStartDate.after(oneYearDate)) { 
 					twelveMonthECL = lifetimeECL;
 					twelveMonthECLCheck = false;
 				}
 			}
 			
 			lastPD = pd;
+			periodStartDate = periodEndDate;
 		}
 		
 		if (twelveMonthECL == 0d) { twelveMonthECL = lifetimeECL; }
@@ -400,19 +415,32 @@ public class Trade {
 	}
 	
 	public Date getFirstDisbursementDate() {
-		List<CashFlow> cfs = getCFs();
-		
-		for (CashFlow cf : cfs) {
-			if (cf.getCashFlowType().equals(CashFlowType.DISBURSEMENT)) {
-				return cf.getCashFlowDate();
+		if (firstDisbursementDate == null) {
+			List<CashFlow> cfs = getCFs();
+			
+			for (CashFlow cf : cfs) {
+				if (cf.getCashFlowType().equals(CashFlowType.DISBURSEMENT)) {
+					firstDisbursementDate = cf.getCashFlowDate();
+					return firstDisbursementDate;
+				}
 			}
+			
+			for (CashFlow cf : cfs) {
+				firstDisbursementDate = cf.getCashFlowDate();
+				return firstDisbursementDate;
+			}
+			firstDisbursementDate = getAsOfDate();
 		}
-		
-		for (CashFlow cf : cfs) {
-			return cf.getCashFlowDate();
+		return firstDisbursementDate;
+	}
+	
+	public Date getLastCashFlowDate() {
+		if (lastDisbursementDate == null) {
+			List<CashFlow> cfs = getCFs();
+			CashFlow cf = cfs.get(cfs.size() - 1);
+			lastDisbursementDate = cf.getCashFlowDate();
 		}
-		return getAsOfDate();
-		
+		return lastDisbursementDate;
 	}
 	
 	public void setFirstDisbursementCurrency() {
@@ -682,40 +710,76 @@ public class Trade {
 		
 	}
 	
-	public void generateDailyInterest() {
+	public void generateDailyInterestAccrualCashFlows() {
 		if (cfs.isEmpty()) { l.error("No cash flows loaded, cannot generate Daily Interest for Trade " + toString()); return; }
 		
 		String currency = getFirstDisbursementCurrency();
-		Date startDate = getFirstDisbursementDate();
-		Date previousCouponDate = startDate;
-		int couponFrequency = 90;
-		Double couponAmount = 100000d;
+		Double couponFrequency = DateTimeUtils.QUARTERLY; // TODO hardcoded
+		Double couponAmount = 100000d; // TODO hardcoded
 		Double dailyInterest = 0d;
 		Calendar gc = new GregorianCalendar();
-		gc.setTime(startDate);
-		
-		Calendar couponCalendar = gc;
-		couponCalendar.add(Calendar.DATE, couponFrequency);
-		Date couponDate = couponCalendar.getTime();
+		gc.setTime(getFirstDisbursementDate()); //Start date
 		
 		while (gc.getTime().before(maturityDate)) {
 			gc.add(Calendar.DATE, 1);
 			Date flowDate = gc.getTime();
-			if (flowDate.before(couponDate)) {
-				dailyInterest = -1d * couponAmount * ((double) DateTimeUtils.getDateDiff(previousCouponDate, flowDate, TimeUnit.DAYS)) / couponFrequency;
-			}
-			else {
-				dailyInterest = -1d * couponAmount;
-				previousCouponDate = couponDate;
-				couponCalendar.add(Calendar.DATE, couponFrequency); 
-				couponDate = couponCalendar.getTime();
-			}
-			
+			dailyInterest = -1d * couponAmount / couponFrequency;
 			CashFlow cf = new CashFlow(currency, dailyInterest, flowDate, "INTEREST");
 			cfs.add(cf);
 		}
 		
 		Collections.sort(cfs);
+ 	}
+	
+	public void generateDailyInterest() {
+		if (cfs.isEmpty()) { l.error("No cash flows loaded, cannot generate Daily Interest for Trade " + toString()); return; }
+		
+		String currency = getFirstDisbursementCurrency();
+		Date startDate = getFirstDisbursementDate();
+		Date endDate = getLastCashFlowDate();
+		Date flowDate = endDate;
+
+		Double dailyInterest = 0d;
+		Calendar gc = new GregorianCalendar();
+		gc.setTime(endDate);
+		String tradeDisbursementCurrency = getFirstDisbursementCurrency();
+
+		List<CashFlow> intCFs = getInterestCashFlows();
+		Collections.reverse(intCFs);
+		CashFlow intCF = intCFs.remove(0);
+		CashFlow newIntCF;
+		Date intFlowDate = intCF.getCashFlowDate();
+		Date newFlowDate;
+		long dayDiff;
+		int count = 0;
+		while (gc.getTime().after(startDate)) {
+			if (flowDate.equals(intFlowDate)) {
+				if (!intCFs.isEmpty()) {
+					newIntCF = intCFs.remove(0);
+					newFlowDate = newIntCF.getCashFlowDate();
+				}
+				else {
+					newFlowDate = startDate;
+					newIntCF = intCF;
+				}
+				
+				dayDiff = DateTimeUtils.getDateDiff(newFlowDate,intFlowDate, TimeUnit.DAYS);
+				dailyInterest = -1d * intCF.getTradeDisbursementAmount() / dayDiff;
+				//System.out.println("Flow date" + DateFormat.ISO_FORMAT.format(flowDate) + ", New CF date " + DateFormat.ISO_FORMAT.format(newFlowDate) + ", previous CF date " + DateFormat.ISO_FORMAT.format(intFlowDate) + ", dayDiff " + dayDiff + "dailyInterest " + dailyInterest);
+				intCF = newIntCF;
+				intFlowDate = newIntCF.getCashFlowDate();
+					
+			}
+			gc.add(Calendar.DATE, -1);
+			flowDate = gc.getTime();
+			CashFlow cf = new CashFlow(currency, dailyInterest, flowDate, "INTEREST");
+			cf.setTradeDisbursementCurrency(tradeDisbursementCurrency);
+			cfs.add(cf);
+			count++;
+		}
+		
+		Collections.sort(cfs);
+		
  	}
 	
 	public Double getAccruedInterestForDate(Date d) {
@@ -734,33 +798,96 @@ public class Trade {
 	public Double calculateEIR() {
 		Double amortisedCost = 1000d;
 		Double eir = 3.0d;
-		Double previousEir = 3.0d;
-		Double twoPreviousEir = 6.0d;
 		int count = 0;
-		List<CashFlow> cfList = new ArrayList<>(cfs);
-		Collections.reverse(cfList);
-		Double step = 0.001d;
+		boolean first = true;
+			
+		Double step = 1.0d;
+		int up = 1;
+		int lastUp = 1;
+		List<CashFlow> dailyCFList = aggregateDailyCashFlows();
+		
+		Calendar gc = new GregorianCalendar();
+		
+		
+		
 		while ((amortisedCost > 0.1) || (amortisedCost < -0.1)) {
-			List<CashFlow> reversedList = new ArrayList<>(cfList);
-			amortisedCost = calculateEIR(reversedList, eir);
-			l.info("Amortised cost = " + amortisedCost + ", eir = " + eir);
-			eir = (amortisedCost > 0) ? eir + step : eir - step;
+			
+			List<CashFlow> thisCFList = new ArrayList<>(dailyCFList);
+			CashFlow cf = thisCFList.remove(0);
+			Date cfDate = cf.getCashFlowDate();
+			gc.setTime(getFirstDisbursementDate());
+			amortisedCost = 0d; 
+			while (gc.getTime().before(getLastCashFlowDate())) {
+				if (gc.getTime().equals(cfDate)) {
+					amortisedCost = cf.getTradeDisbursementAmount() + (amortisedCost * getDailyEIR(eir));
+					cf = thisCFList.remove(0);
+					cfDate = cf.getCashFlowDate();
+				}
+				else {
+					amortisedCost = amortisedCost * getDailyEIR(eir);
+				}
+				
+				gc.add(Calendar.DATE, 1);
+			}
+			
+			//l.info("Amortised cost = " + amortisedCost + ", eir = " + eir);
+			lastUp = up;
+			up = (amortisedCost > 0) ? 1 : -1;
+			if (first) { first = false; }
+			else if (up != lastUp) { step /= 10d; }
+			eir += (step * (double) up);
 			count++;
-			if (twoPreviousEir.equals(eir)) { step /= 10d; }
-			twoPreviousEir = previousEir;
-			previousEir = eir;
 		}
 		l.info("Count to calculate eir = " + count);
 		return eir;
 	}
 	
-	public Double calculateEIR(List<CashFlow> cfList, Double eir) {
-		if (cfList.isEmpty()) { return 0d; }
-		CashFlow cf = cfList.remove(0);
+	private Double getDailyEIR(Double rate) {
+		return  1d + (rate/365d); 
+	}
+	
+	private List<CashFlow> aggregateDailyCashFlows() {
+		List<CashFlow> returnCfs = new ArrayList<>();
+		CashFlow previousCf = null;
+		
+		for (CashFlow cf : cfs) {
+			if (null == previousCf) {
+				previousCf = cf.clone();
+				returnCfs.add(previousCf);
+			}
+			else {
+				if (cf.getCashFlowDate().equals(previousCf.getCashFlowDate())) {
+					Double previousCfAmount = previousCf.getTradeDisbursementAmount();
+					Double currentAmt = cf.getTradeDisbursementAmount();
+					previousCf.setTradeDisbursementAmount(previousCfAmount + currentAmt);
+				}
+				else {
+					previousCf = cf.clone();
+					returnCfs.add(previousCf);
+				}
+			}
+			
+		}
+		Collections.sort(returnCfs);
+		
+		return returnCfs;
+	}
+	
+	public Double calculateAmortisedCost(Double eir) {
+		if (reversedCFs.isEmpty()) { return 0d; }
+		CashFlow cf = reversedCFs.remove(0);
 		if (cf.getCashFlowDate().equals(getFirstDisbursementDate())) {
 			return cf.getAmount();
 		}
-		return cf.getAmount() + (calculateEIR(cfList, eir) * (1 + eir/365d));
+		return cf.getAmount() + (calculateAmortisedCost(eir) * (getDailyEIR(eir)));
+	}
+	
+	public Double sumAllCashFlows(List<CashFlow> cfs) {
+		Double amount = 0d;
+		for (CashFlow cf : cfs) {
+			amount += cf.getTradeDisbursementAmount();
+		}
+		return amount;
 	}
 	
 }
