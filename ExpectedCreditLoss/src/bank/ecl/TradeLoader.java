@@ -149,7 +149,7 @@ public class TradeLoader {
 					
 				contractReference = lineArray.get(0);
 				bookID = lineArray.get(1);
-				balanceSheetDate = InputHandlers.dateMe(lineArray.get(2), DateFormat.DMY_FORMAT);
+				balanceSheetDate = InputHandlers.dateMe(lineArray.get(2), DateFormat.ISO_FORMAT);
 				isImpaired = lineArray.get(3);
 				daysPastDue = InputHandlers.intMe(lineArray.get(4));
 				overallPDRating = lineArray.get(5);
@@ -172,8 +172,8 @@ public class TradeLoader {
 				contractStructure = lineArray.get(22);
 				holdingPartyReference = lineArray.get(23);
 				currency = lineArray.get(24);
-				maturityDate = InputHandlers.dateMe(lineArray.get(25), DateFormat.DMY_FORMAT);
-				originDate = InputHandlers.dateMe(lineArray.get(26), DateFormat.DMY_FORMAT);
+				maturityDate = InputHandlers.dateMe(lineArray.get(25), DateFormat.ISO_FORMAT);
+				originDate = InputHandlers.dateMe(lineArray.get(26), DateFormat.ISO_FORMAT);
 				principal = InputHandlers.doubleMe(lineArray.get(27));
 				specificProductClass = lineArray.get(28);
 				amortizationType = lineArray.get(29);
@@ -181,8 +181,8 @@ public class TradeLoader {
 				basis = lineArray.get(31);
 				businessRollDayConvention = lineArray.get(32);
 				compoundedPeriod = lineArray.get(33);
-				compoundingBreakingDate = InputHandlers.dateMe(lineArray.get(34), DateFormat.DMY_FORMAT);
-				interestBreakingDate = InputHandlers.dateMe(lineArray.get(35), DateFormat.DMY_FORMAT);
+				compoundingBreakingDate = InputHandlers.dateMe(lineArray.get(34), DateFormat.ISO_FORMAT);
+				interestBreakingDate = InputHandlers.dateMe(lineArray.get(35), DateFormat.ISO_FORMAT);
 				interestCapitalized = InputHandlers.doubleMe(lineArray.get(36));
 				interestPaymentDetermination = lineArray.get(37);
 				interestPaymentTiming = lineArray.get(38);
@@ -190,7 +190,7 @@ public class TradeLoader {
 				rateCap = lineArray.get(40);
 				rateFloor = lineArray.get(41);
 				rollConvention = lineArray.get(42);
-				lastAvailabilityDate = InputHandlers.dateMe(lineArray.get(43), DateFormat.DMY_FORMAT);
+				lastAvailabilityDate = InputHandlers.dateMe(lineArray.get(43), DateFormat.ISO_FORMAT);
 				effectiveYield = InputHandlers.doubleMe(lineArray.get(44));
 				
 				String[] split = contractReference.split("/");

@@ -64,7 +64,7 @@ public class ECLDataLoader {
 			writer.write("ContractRef, CCY, 12MECL, LifetimeECL, Stage, 12MECLEUR, LifetimeECLEUR, ProvisionEUR\n");
 			
 			for (Trade t : TradeStore.getInstance().getAllTrades()) {
-				writer.write(t.getECLResult().toString(delimiter) + "\n");
+				writer.write(t.getECLResult().toString(delimiter));
 			}
 		
 			writer.flush();

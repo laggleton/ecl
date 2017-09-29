@@ -48,12 +48,12 @@ public class RatingLoader {
 		
 		String delimiter = "\t";
 		Scanner scanner = null;
-		if (null != ps.getPreference(PreferencesStore.FX_FILE_DELIMITER)) { delimiter =  ps.getPreference(PreferencesStore.FX_FILE_DELIMITER); }
+		if (null != ps.getPreference(PreferencesStore.PD_FILE_DELIMITER)) { delimiter =  ps.getPreference(PreferencesStore.PD_FILE_DELIMITER); }
 	
 				
 		try {
 			
-			scanner = new Scanner(new File(ps.getPreference(PreferencesStore.DIRECTORY) + ps.getPreference(PreferencesStore.FX_FILE)));
+			scanner = new Scanner(new File(ps.getPreference(PreferencesStore.DIRECTORY) + ps.getPreference(PreferencesStore.PD_FILE)));
 		    while (scanner.hasNext()) {
 								
 		    	line = scanner.nextLine();
@@ -72,6 +72,7 @@ public class RatingLoader {
 					
 				pd = new ProbabilityOfDefault(rating, gc.getTime(), value);
 				ratStore.getRating(rating).addPD(pd);
+				
 			}
 		}
 		catch (Exception fe) {

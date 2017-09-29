@@ -74,6 +74,8 @@ public class CashFlowLoader {
 				currency = lineArray.get(8);
 				amount = InputHandlers.doubleMe(lineArray.get(9));
 				
+				if ((null == cashFlowSubType) || (cashFlowSubType.isEmpty())) { cashFlowSubType = cashFlowType; }
+				
 				cf = new CashFlow(currency, amount, paymentDate, cashFlowSubType);
 				
 				if (tradeStore.getTrade(contractReference) != null) { 

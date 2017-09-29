@@ -731,7 +731,7 @@ public class Trade {
 		Collections.sort(cfs);
  	}
 	
-	public void generateDailyInterest() {
+	public void generateDailyInterestAccruals() {
 		if (cfs.isEmpty()) { l.error("No cash flows loaded, cannot generate Daily Interest for Trade " + toString()); return; }
 		
 		String currency = getFirstDisbursementCurrency();
@@ -808,8 +808,6 @@ public class Trade {
 		
 		Calendar gc = new GregorianCalendar();
 		
-		
-		
 		while ((amortisedCost > 0.1) || (amortisedCost < -0.1)) {
 			
 			List<CashFlow> thisCFList = new ArrayList<>(dailyCFList);
@@ -838,7 +836,7 @@ public class Trade {
 			eir += (step * (double) up);
 			count++;
 		}
-		l.info("Count to calculate eir = " + count);
+		//l.info("Count to calculate eir = " + count);
 		return eir;
 	}
 	
