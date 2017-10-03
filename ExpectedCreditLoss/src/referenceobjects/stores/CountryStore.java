@@ -4,9 +4,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import referenceobjects.Country;
+import utilities.Logger;
 
 public class CountryStore {
 	private static CountryStore instance;
+	private Logger l = Logger.getInstance();
 	
 	private Map<String, Country> countryMap = new HashMap<>();
 	
@@ -36,9 +38,9 @@ public class CountryStore {
 	}
 	
 	public void printAll() {
-		System.out.println("Country,ProbGrowth,ProbRecession");
+		l.info("Country,ProbGrowth,ProbRecession");
 		for (Country ctry : countryMap.values()) {
-			System.out.println(ctry.getCountryName() + "," + ctry.getProbabilityOfGrowth() + "," + ctry.getProbabilityOfRecession());
+			l.info(ctry.getCountryName() + "," + ctry.getProbabilityOfGrowth() + "," + ctry.getProbabilityOfRecession());
 		}
 	}
 

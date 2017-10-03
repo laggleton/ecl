@@ -52,10 +52,24 @@ public class CountryLoader {
 				
 				country = lineArray.get(0);
 				year = InputHandlers.intMe(lineArray.get(1));
-				value = InputHandlers.doubleMe(lineArray.get(2));
-				oneYearGrowth = InputHandlers.doubleMe(lineArray.get(3));
-					
+				
+				if ((null == lineArray.get(2)) || (lineArray.get(2).isEmpty()) || (lineArray.get(2).equals(""))) { 
+					value = null;
+				}
+				else {
+					value = InputHandlers.doubleMe(lineArray.get(2)) / 100d;
+				}
+				
+				if ((null == lineArray.get(3)) || (lineArray.get(3).isEmpty()) || (lineArray.get(3).equals(""))) {
+					oneYearGrowth = null;
+				}
+				else {
+					oneYearGrowth = InputHandlers.doubleMe(lineArray.get(3)) / 100d;
+				}
+				
+				
 				gdp = new GrossDomesticProduct(year);
+				
 				gdp.setActualGrowth(value);
 				gdp.setOneYearPredictedGrowth(oneYearGrowth);
 				
@@ -70,5 +84,10 @@ public class CountryLoader {
 			if (null != scanner) { scanner.close(); }
 		}
 		l.info("Loaded " + CountryStore.getInstance().getSize() + " countries");
+	}
+	
+	public static void printAllCountries() {
+		CountryStore ctryStore = CountryStore.getInstance();
+		ctryStore.printAll();
 	}
 }

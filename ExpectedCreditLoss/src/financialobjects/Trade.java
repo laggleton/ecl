@@ -35,13 +35,15 @@ public class Trade {
 	private Date maturityDate;
 	private Date asOfDate;
 	private boolean impaired = false;
-		
+	private String drlFlag;
 	private String firstDisbursementCurrency;
 	
 	private ECLResult eclResult;
 	private List<ECLIntermediateResult> eclIntermediateList = new ArrayList<>();
 	private String sovereignRiskType;
 	private Double facilityCommitmentAmount;
+	private String stagingReason;
+	private int ifrs9Stage;
 	
 	public Logger l = Logger.getInstance();
 	private Date firstDisbursementDate = null;
@@ -53,6 +55,14 @@ public class Trade {
 
 	public void setFacilityCommitmentAmount(Double facilityCommitmentAmount) {
 		this.facilityCommitmentAmount = facilityCommitmentAmount;
+	}
+	
+	public String getDrlFlag() {
+		return drlFlag;
+	}
+
+	public void setDrlFlag(String drlFlag) {
+		this.drlFlag = drlFlag;
 	}
 
 	public Trade(String instrumentId, String posId, String bookId, String tradeId, Integer tradeSize, String currency) {
@@ -90,15 +100,48 @@ public class Trade {
 	}
 	
 	public int assessIFRS9Staging() {
-				
-		if ((impaired)|| (creditRating == "8.0") || (daysPastDue > 90) || ((daysInStage3 < 60) && (daysInStage3 > 0))) {
-			return 3;
-		}
-		else if (threeNotchDownGrade() || (watchlist > 3) || (daysPastDue > 30) || ((daysInStage2 < 60) && (daysInStage2 > 0)) ) {
-			return 2;
-		}
 		
-		return 1;
+		if (impaired) {
+			ifrs9Stage = 3;
+			stagingReason = "Impaired";
+		}
+		else if (creditRating == "8.0") {
+			ifrs9Stage = 3;
+			stagingReason = "8.0";
+		}
+		else if (daysPastDue > 90) {
+			ifrs9Stage = 3;
+			stagingReason = "90DPD";
+		}
+		else if ((daysInStage3 < 60) && (daysInStage3 > 0)) {
+			ifrs9Stage = 3;
+			stagingReason = "Probation";
+		}
+		else if (threeNotchDownGrade()) {
+			ifrs9Stage = 2;
+			stagingReason = "Three Notch Downgrade";
+		}
+		else if (watchlist >= 3) {
+			ifrs9Stage = 2;
+			stagingReason = "Watchlist";
+		}
+		else if (daysPastDue > 30) {
+			ifrs9Stage = 2;
+			stagingReason = "30DPD";
+		}
+		else if ((daysInStage2 < 60) && (daysInStage2 > 0)) {
+			ifrs9Stage = 2;
+			stagingReason = "Probation";
+		}
+		else if (getDrlFlag().equals("Y")) {
+			ifrs9Stage = 2;
+			stagingReason = "DRL";
+		}
+		else {
+			ifrs9Stage = 1;
+			stagingReason = "N/A";
+		}
+		return ifrs9Stage;
 		
 	}
 	
@@ -172,12 +215,67 @@ public class Trade {
 		calculateECL(s, periodLength);
 	}
 	
+	public boolean allCashFlowsBefore(Date d) {
+		List<CashFlow> revCFs = new ArrayList<>(cfs);
+		Collections.reverse(revCFs);
+		
+		if (revCFs.get(0).getCashFlowDate().before(d)) { return true; }
+		return false;
+	}
+	
+	public void calculateImpairedECL() {
+		
+		Double ead = calculateEAD(asOfDate, cfs, 0d);
+		Double lgd = calculateLGD(lgds);
+		Double ecl = ead * lgd;
+		
+		ECLIntermediateResult e = new ECLIntermediateResult(dealId, facilityId, bookId, tradeIdentifier, getFirstDisbursementCurrency());
+		e.setPeriodDate(asOfDate);
+		e.setDiscountFactor(1d);
+		e.setProbabilityOfDefault(1d);
+		e.setIncrementalPD(1d);
+		e.setEad(ead);
+		e.setPeriodECL(ecl);
+		e.setLgd(lgd);
+		eclIntermediateList.add(e);
+		
+		eclResult = new ECLResult(dealId, facilityId, bookId, tradeIdentifier, getFirstDisbursementCurrency());
+		eclResult.setLifetimeECL(ecl);
+		eclResult.setTwelveMonthECL(ecl);
+		eclResult.setEir(0d);
+		eclResult.setStagingReason(stagingReason);
+		eclResult.setImpairmentStageIFRS9(3);
+	}
 	
 	public void calculateECL(Scenario s, double periodLength) {
 		
 		if (maturityDate.before(asOfDate)) { 
 			System.out.println("Maturity Date " + maturityDate.toString() + " before asOfDate " + asOfDate.toString());
 		} //don't care about matured trades
+		
+		if (assessIFRS9Staging() == 3) {
+			calculateImpairedECL();
+			return;
+		}
+		if (allCashFlowsBefore(asOfDate)) { 
+			l.info("All cash flows in past for " + getPrimaryKeyDecorator(","));
+			ECLIntermediateResult e = new ECLIntermediateResult(dealId, facilityId, bookId, tradeIdentifier, getFirstDisbursementCurrency());
+			e.setPeriodDate(asOfDate);
+			e.setDiscountFactor(1d);
+			e.setProbabilityOfDefault(0d);
+			e.setIncrementalPD(0d);
+			e.setPeriodECL(0d);
+			e.setEad(0d);
+			e.setLgd(0d);
+			eclIntermediateList.add(e);
+			eclResult = new ECLResult(dealId, facilityId, bookId, tradeIdentifier, getFirstDisbursementCurrency());
+			eclResult.setLifetimeECL(0d);
+			eclResult.setTwelveMonthECL(0d);
+			eclResult.setEir(0d);
+			eclResult.setImpairmentStageIFRS9(assessIFRS9Staging());
+			eclResult.setStagingReason(stagingReason);
+			return;
+		}
 		
 		List<CashFlow> cfs = getCFs(s); 
 		List<ProbabilityOfDefault> pds = getPDs(s);
@@ -189,6 +287,7 @@ public class Trade {
 		long diff = maturityDate.getTime() - asOfDate.getTime();
 		long days =  TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
 		int periods = (int) (days/periodLength);
+		if (periods == 0) { periods = 1; }
 		
 		int daysFromAsOf;
 		Double ead = new Double(0d);
@@ -199,6 +298,10 @@ public class Trade {
 		Date periodEndDate;
 		Date periodStartDate = asOfDate;
 		Calendar gc;
+		
+		int periodsPerYear = 12; // Default to MONTHLY
+		if (periodLength == DateTimeUtils.DAILY) { periodsPerYear = 365; }
+		else if (periodLength == DateTimeUtils.QUARTERLY) { periodsPerYear = 4; }
 	
 		Double discountFactor = new Double(0d);
 		Double periodECL = new Double(0d);
@@ -208,13 +311,20 @@ public class Trade {
 		gc = GregorianCalendar.getInstance();
 		gc.setTime(asOfDate);
 		gc.add(Calendar.YEAR, 1);
-		Date oneYearDate = gc.getTime();
-				
+						
 		for (int i = 1; i <= periods; i++) {
 			
 			gc.setTime(asOfDate);
-			daysFromAsOf = (int) (i * periodLength);
-			gc.add(Calendar.DATE, daysFromAsOf);
+			if (periodLength == DateTimeUtils.DAILY) {
+				gc.add(Calendar.DATE, i);
+			}
+			else if (periodLength == DateTimeUtils.QUARTERLY) {
+				gc.add(Calendar.MONTH, 3 * i);
+			}
+			else {
+				gc.add(Calendar.MONTH, i);
+			}
+			
 			periodEndDate = gc.getTime();
 			
 			if (periodEndDate.after(maturityDate)) { periodEndDate = maturityDate; }
@@ -230,7 +340,7 @@ public class Trade {
 			
 			periodECL = discountFactor * ead * incrementalPD * lgd;
 			
-			e.setPeriodDate(periodStartDate);
+			e.setPeriodDate(periodEndDate);
 			e.setEad(ead);
 			e.setDiscountFactor(discountFactor);
 			e.setProbabilityOfDefault(pd);
@@ -244,14 +354,15 @@ public class Trade {
 			
 			if (twelveMonthECLCheck)  {
 				
-				if (periodStartDate.equals(oneYearDate) || periodStartDate.after(oneYearDate)) { 
+				if (i == periodsPerYear) { 
 					twelveMonthECL = lifetimeECL;
 					twelveMonthECLCheck = false;
 				}
 			}
 			
 			lastPD = pd;
-			periodStartDate = periodEndDate;
+			gc.add(Calendar.DATE, 1);
+			periodStartDate = gc.getTime();
 		}
 		
 		if (twelveMonthECL == 0d) { twelveMonthECL = lifetimeECL; }
@@ -260,6 +371,7 @@ public class Trade {
 		eclResult.setTwelveMonthECL(twelveMonthECL);
 		eclResult.setEir(eir);
 		eclResult.setImpairmentStageIFRS9(assessIFRS9Staging());
+		eclResult.setStagingReason(stagingReason);
 	}
 	
 	/*
@@ -886,6 +998,36 @@ public class Trade {
 			amount += cf.getTradeDisbursementAmount();
 		}
 		return amount;
+	}
+	
+	public String getStagingReason() {
+		return stagingReason;
+	}
+
+	public void setStagingReason(String stagingReason) {
+		this.stagingReason = stagingReason;
+	}
+	
+	public String getStagingCriteria(String delimiter) {
+		return getRating().getRating()
+				+ delimiter + getInitialCreditRating()
+				+ delimiter + getCreditRating()
+				+ delimiter + getWatchlist()
+				+ delimiter + getDrlFlag()
+				+ delimiter + assessIFRS9Staging()
+				+ delimiter + getStagingReason() 
+				;
+	}
+	
+	public static String getStagingHeader(String delimiter) {
+		return "OverallPDRating"
+				+ delimiter + "InitialCreditRating"
+				+ delimiter + "CurrentCreditRating"
+				+ delimiter + "Watchlist"
+				+ delimiter + "DrlFlag"
+				+ delimiter + "Stage"
+				+ delimiter + "StageReason"
+				;
 	}
 	
 }

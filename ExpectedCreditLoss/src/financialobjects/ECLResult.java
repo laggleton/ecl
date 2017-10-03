@@ -20,6 +20,8 @@ public class ECLResult implements Comparable<ECLResult> {
 	private Double lifetimeECLEUR;
 	private Date lastDateInStage2;
 	private Date lastDateInStage3;
+	private String stagingReason;
+
 	private Double eir;
 	private boolean converted = false;
 	
@@ -48,6 +50,9 @@ public class ECLResult implements Comparable<ECLResult> {
 		else if (impairmentStageIFRS9 == 2) {
 			return getLifetimeECLEUR();
 		}
+		else if (impairmentStageIFRS9 == 3) {
+			return getLifetimeECLEUR();
+		}
 		return 0d;
 	}
 	
@@ -66,6 +71,7 @@ public class ECLResult implements Comparable<ECLResult> {
 				+ delimiter + getTwelveMonthECL() 
 				+ delimiter + getLifetimeECL() 
 				+ delimiter + getImpairmentStageIFRS9() 
+				+ delimiter + getStagingReason()
 				+ delimiter + getTwelveMonthECLEUR() 
 				+ delimiter + getLifetimeECLEUR() 
 				+ delimiter + getProvisionEUR()
@@ -87,6 +93,7 @@ public class ECLResult implements Comparable<ECLResult> {
 				+ delimiter + getLifetimeECL()
 				+ delimiter + getFirstDisbursementCurrency()
 				+ delimiter + getImpairmentStageIFRS9()
+				+ delimiter + getStagingReason()
 				+ delimiter + getEir()
 				+ delimiter + getLastDateInStage2()
 				+ delimiter + getLastDateInStage3()
@@ -99,6 +106,7 @@ public class ECLResult implements Comparable<ECLResult> {
 				+ delimiter + "12MECL" 
 				+ delimiter + "LifetimeECL"
 				+ delimiter + "ImpairmentStageIFRS9"
+				+ delimiter + "StagingReason"
 				+ delimiter + "12MECLEUR" 
 				+ delimiter + "LifetimeECLEUR" 
 				+ delimiter + "ProvisionEUR"
@@ -116,6 +124,7 @@ public class ECLResult implements Comparable<ECLResult> {
 				+ delimiter + "LifetimeECL"
 				+ delimiter + "Currency"
 				+ delimiter + "StageAssessment"
+				+ delimiter + "StagingReason"
 				+ delimiter + "EIR"
 				+ delimiter + "LastDateInStage2"
 				+ delimiter + "LastDateInStage3"
@@ -128,6 +137,14 @@ public class ECLResult implements Comparable<ECLResult> {
 	
 	public String toFullReport() {
 		return toFullReport(",");
+	}
+	
+	public String getStagingReason() {
+		return stagingReason;
+	}
+
+	public void setStagingReason(String stagingReason) {
+		this.stagingReason = stagingReason;
 	}
 	
 	public Date getAsOfDate() {

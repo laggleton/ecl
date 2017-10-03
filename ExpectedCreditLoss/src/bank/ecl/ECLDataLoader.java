@@ -5,7 +5,9 @@ import java.io.IOException;
 
 import java.io.File;
 import java.text.NumberFormat;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 import financialobjects.CashFlow;
 import financialobjects.ECLIntermediateResult;
@@ -38,6 +40,7 @@ public class ECLDataLoader {
 		Scenario s = new Scenario(1.0d);
 		Double eurProvision = 0d;
 		
+		//Trade t = TradeStore.getInstance().getTrade("11865_MARITZAIZT/16324");
 		for (Trade t : TradeStore.getInstance().getAllTrades()) {
 			t.calculateECL(s, DateTimeUtils.MONTHLY);
 			t.assessIFRS9Staging();
@@ -73,6 +76,15 @@ public class ECLDataLoader {
 		catch (IOException e) {
 			l.error(e);
 		}
+	}
+	
+	public void printRatings() {
+		RatingLoader rl = new RatingLoader();
+		rl.printPDs();
+	}
+	
+	public void printCountries() {
+		CountryLoader.printAllCountries();
 	}
 
 	public void printResults(boolean printIntermediateResults) {
@@ -125,15 +137,18 @@ public class ECLDataLoader {
       
 			// Writes the header to the file
 			intermediateWriter.write(Trade.getPrimaryKeyHeader(delimiter));
-			intermediateWriter.write(ECLIntermediateResult.getHeader(delimiter));
+			intermediateWriter.write(ECLIntermediateResult.getFullHeader(delimiter));
 			
 			String tradeDecorator = "";
 			
 			// Loops through trades and intermediate results 
 			for (Trade t : TradeStore.getInstance().getAllTrades()) {
 				tradeDecorator = t.getPrimaryKeyDecorator(delimiter);
-				for (ECLIntermediateResult e : t.getIntermediateECLResults()) {
-					intermediateWriter.write(tradeDecorator + e.toString(delimiter));
+				List<ECLIntermediateResult> eList =  t.getIntermediateECLResults();
+				Collections.sort(eList);
+				for (int i = 0; i < eList.size(); i++) {
+					ECLIntermediateResult e = eList.get(i);
+					intermediateWriter.write(tradeDecorator + e.toFullString(delimiter, i+1));
 				}
 			}
 		
@@ -174,6 +189,36 @@ public class ECLDataLoader {
 		
 			cashFlowWriter.flush();
 			cashFlowWriter.close();
+		}
+		catch (IOException e) {
+			l.error(e);
+		}
+	}
+	
+	public void printStageReasons() {
+		String delimiter = ps.getPreference(PreferencesStore.OUTPUT_DELIMITER);
+		try {
+			Date d = new Date();
+			
+			File stagingFile = new File(ps.getPreference(PreferencesStore.DIRECTORY) + "ecl_bank-stage-reasons-" + DateFormat.OUTPUT_FORMAT.format(d) + ".csv");
+		      
+			// creates the file
+			stagingFile.createNewFile();
+      
+			// creates a FileWriter Object
+			FileWriter stagingWriter = new FileWriter(stagingFile); 
+      
+			// Writes the header to the file
+			stagingWriter.write(Trade.getPrimaryKeyHeader(delimiter));
+			stagingWriter.write(Trade.getStagingHeader(delimiter) + "\n");
+			
+			// Loops through trades and cash flows 
+			for (Trade t : TradeStore.getInstance().getAllTrades()) {
+				stagingWriter.write(t.getPrimaryKeyDecorator(delimiter) + t.getStagingCriteria(delimiter) + "\n");
+			}
+		
+			stagingWriter.flush();
+			stagingWriter.close();
 		}
 		catch (IOException e) {
 			l.error(e);

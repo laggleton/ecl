@@ -97,6 +97,7 @@ public class TradeTest {
 		assertEquals(expectedResult, probGrowth, 0.01);
 	}
 	
+		
 	@Test
 	public void evaluatesCalculateEAD() {
 		Date eadDate = new Date();

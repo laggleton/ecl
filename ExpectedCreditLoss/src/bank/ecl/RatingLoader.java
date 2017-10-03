@@ -83,13 +83,16 @@ public class RatingLoader {
 		}
 		
 		l.info("Loaded " + ratStore.getSize() + " ratings");
+		
 	}
 	
-	private void printPDs() {
+	public void printPDs() {
+		String delimiter = ",";
+		l.info(ProbabilityOfDefault.getHeader(delimiter));
 		for (Rating r : RatingStore.getInstance().getAllRatings()) {
 			List<ProbabilityOfDefault> pds = r.getPDs();
 			for (ProbabilityOfDefault pd : pds) {
-				l.info("PD Rating " + pd.getRating() + ", Date " + pd.getDate() + ", pd  " + pd.getPD());
+				l.info(pd.toString(delimiter));
 			}
 		}
 	}

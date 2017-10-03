@@ -1,9 +1,6 @@
 package bank.ecl;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -15,6 +12,7 @@ import financialobjects.stores.TradeStore;
 import referenceobjects.BusinessDate;
 import referenceobjects.DateFormat;
 import referenceobjects.LossGivenDefault;
+import referenceobjects.Rating;
 import referenceobjects.stores.CountryStore;
 import referenceobjects.stores.RatingStore;
 import utilities.FileUtils;
@@ -148,16 +146,17 @@ public class TradeLoader {
 				lineArray = FileUtils.parseLine(line, delimiter);
 					
 				contractReference = lineArray.get(0);
+				
 				bookID = lineArray.get(1);
 				balanceSheetDate = InputHandlers.dateMe(lineArray.get(2), DateFormat.ISO_FORMAT);
 				isImpaired = lineArray.get(3);
 				daysPastDue = InputHandlers.intMe(lineArray.get(4));
-				overallPDRating = lineArray.get(5);
+				overallPDRating = InputHandlers.cleanMe(lineArray.get(5));
 				countryOfRisk = lineArray.get(6);
 				overallLGDRating = InputHandlers.doubleMe(lineArray.get(7));
 				watchList = InputHandlers.intMe(lineArray.get(8));
-				initialRiskRating = lineArray.get(9);
-				currentRiskRating = lineArray.get(10);
+				initialRiskRating = InputHandlers.cleanMe(lineArray.get(9));
+				currentRiskRating = InputHandlers.cleanMe(lineArray.get(10));
 				lastDayInStage2 = InputHandlers.intMe(lineArray.get(11));
 				lastDayInStage3 = InputHandlers.intMe(lineArray.get(12));
 				sovereignRiskType = lineArray.get(13);
@@ -201,10 +200,23 @@ public class TradeLoader {
 				
 				t.setEIR(effectiveYield);
 				t.setCountry(CountryStore.getInstance().getCountry(countryOfRisk));
-				t.setCreditRating(overallPDRating);
+				t.setFacilityCommitmentAmount(facilityCommitmentAmount);
+				t.setWatchlist(watchList);
+				t.setDrlFlag(drlFlag);
+				
+				/*
+				 * Tweak the below for rating upgrade/downgrade
+				 */
+				//currentRiskRating = Rating.upgradeRating(currentRiskRating);
+				//currentRiskRating = Rating.downgradeRating(currentRiskRating);
+				
+				//overallPDRating = Rating.upgradeRating(overallPDRating);
+				//overallPDRating = Rating.downgradeRating(overallPDRating);
+				//*/
+				
+				t.setCreditRating(currentRiskRating);
 				t.setSovereignRiskType(sovereignRiskType);
 				t.setInitialCreditRating(initialRiskRating);
-				t.setFacilityCommitmentAmount(facilityCommitmentAmount);
 				t.setRating(ratStore.getRating(overallPDRating));
 				t.setAsOfDate(asOfDate);
 				t.setMaturityDate(maturityDate);

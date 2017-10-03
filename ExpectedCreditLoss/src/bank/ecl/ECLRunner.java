@@ -31,6 +31,9 @@ public class ECLRunner {
 		dl.printResults(true);
 		dl.printCashFlows();
 		dl.printEURResults();
+		dl.printStageReasons();
+		//dl.printRatings();
+		//dl.printCountries();
 
 	}
 

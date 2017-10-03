@@ -46,6 +46,7 @@ public class ECLIntermediateResult implements Comparable<ECLIntermediateResult> 
 	 */
 	public String toString(String delimiter) {
 		return getTenor()
+				+ delimiter + getPeriodDate()
 				+ delimiter + getProbabilityOfDefault()
 				+ delimiter + getLgd()
 				+ delimiter + getEad()
@@ -53,11 +54,48 @@ public class ECLIntermediateResult implements Comparable<ECLIntermediateResult> 
 				+ "\n";
 	}
 	
+	public String toFullString(String delimiter) {
+		return getTenor()
+				+ delimiter + getPeriodDate()
+				+ delimiter + getProbabilityOfDefault()
+				+ delimiter + getIncrementalPD()
+				+ delimiter + getLgd()
+				+ delimiter + getEad()
+				+ delimiter + getDiscountFactor()
+				+ delimiter + getFirstDisbursementCurrency()
+				+ "\n";
+	}
+	
+	public String toFullString(String delimiter, int i) {
+		return i + "M"
+				+ delimiter + getPeriodDate()
+				+ delimiter + getProbabilityOfDefault()
+				+ delimiter + getIncrementalPD()
+				+ delimiter + getLgd()
+				+ delimiter + getEad()
+				+ delimiter + getDiscountFactor()
+				+ delimiter + getFirstDisbursementCurrency()
+				+ "\n";
+	}
+	
 	public static String getHeader(String delimiter) {
 		return "Tenor" 
+				+ delimiter + "PeriodDate"
 				+ delimiter + "PD"
 				+ delimiter + "LGD"
 				+ delimiter + "EAD"
+				+ delimiter + "Currency"
+				+ "\n";
+	}
+	
+	public static String getFullHeader(String delimiter) {
+		return "Tenor" 
+				+ delimiter + "PeriodDate"
+				+ delimiter + "PD"
+				+ delimiter + "IncrementalPD"
+				+ delimiter + "LGD"
+				+ delimiter + "EAD"
+				+ delimiter + "DF"
 				+ delimiter + "Currency"
 				+ "\n";
 	}
