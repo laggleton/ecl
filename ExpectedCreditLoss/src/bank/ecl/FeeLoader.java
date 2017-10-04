@@ -96,11 +96,8 @@ public class FeeLoader {
 			if (null != scanner) { scanner.close(); }
 		}
 		
-		for (String t : missingTrades) {
-			l.info("No trade data for cash flows, contractref " + t);
-		}
 		l.warn("Missing trade data for " + missingTrades.size());
 		
-		l.info("Loaded " + count + " cash flows");
+		l.info("Loaded " + count + " fee cash flows");
 	}
 }

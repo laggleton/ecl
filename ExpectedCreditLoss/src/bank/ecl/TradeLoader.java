@@ -131,6 +131,8 @@ public class TradeLoader {
 		RatingStore ratStore = RatingStore.getInstance();
 		TradeStore tradeStore = TradeStore.getInstance();
 		
+		List<String> ctrctList = getInScopeContractRefs();
+		
 		if (null != ps.getPreference(PreferencesStore.CONTRACT_FILE_DELIMITER)) { delimiter =  ps.getPreference(PreferencesStore.CONTRACT_FILE_DELIMITER); }
 		
 		try {
@@ -146,6 +148,8 @@ public class TradeLoader {
 				lineArray = FileUtils.parseLine(line, delimiter);
 					
 				contractReference = lineArray.get(0);
+				
+		//		if (!ctrctList.contains(contractReference)) { continue; }
 				
 				bookID = lineArray.get(1);
 				balanceSheetDate = InputHandlers.dateMe(lineArray.get(2), DateFormat.ISO_FORMAT);
@@ -241,6 +245,35 @@ public class TradeLoader {
 		
 		l.info("Loaded " + tradeStore.getSize() + " trades");
 		
+	}
+	
+	public static List<String> getInScopeContractRefs(){
+		List<String> list = new ArrayList<>();
+		list.add("1863_AZERBAREP/2090");
+	/*	list.add("34739_ANELIKBKYV/59198");
+		list.add("35091_PROMSVYAZB/47410");
+		list.add("35862/49203");
+		//list.add("37599_KYIVSKMETU/48255");
+		list.add("39353_BKREPUBTBL/51493");
+		list.add("41840_GRANDPLAZA/70632");
+		list.add("42564_CAZINWASTE/57470");
+		list.add("42944_DENIZBANK/58185");
+		list.add("43375_KRERURKOS/60087");
+		list.add("43375_KRERURKOS/60087_SF");
+		list.add("43560_YUSTAT/60197");
+		list.add("43973_SOCGENMARO/61857");
+		list.add("44014_GRADSKOSRB/69219");
+		list.add("44080_DUNDEE/60354");
+		list.add("44166_ETILIK/60397");
+		list.add("47200_STEREOLTD/66132");
+		list.add("47229_KAZAVTOZHO/66193");
+		list.add("47279_ALTERMODUS/66561");
+		list.add("47296_BMILLCAZE/66482");
+		list.add("47383_MVCARGOLCU/66604");
+		list.add("47598_ZOHLY/70685");
+		list.add("47704_NETBORSANT/67324");
+		list.add("47968_FRUTAROMGB/67941");*/
+		return list;
 	}
 	
 	/*

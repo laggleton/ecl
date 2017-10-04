@@ -562,6 +562,10 @@ public class Trade {
 				firstDisbursementCurrency = cf.getCurrency();
 				break;
 			}
+			else if (cf.getCashFlowSubType().equals(CashFlowType.PRINCIPAL) && (cf.getAmount() < 0)) {
+				firstDisbursementCurrency = cf.getCurrency();
+				break;
+			}
 		}
 		if (null == firstDisbursementCurrency) {
 			for (CashFlow cf : cfs) {
@@ -804,17 +808,19 @@ public class Trade {
 		String currency = getFirstDisbursementCurrency();
 		Double amount = 0d;
 		if (sovereignRiskType.equals("N")) {
-			amount = 5000d;
+			amount = -5000d;
 		}
 		else {
-			amount = 22000d;
-			amount += (facilityCommitmentAmount / 1000000d) * 450;
+			amount = -22000d;
+			amount += (facilityCommitmentAmount / 1000000d) * -450d;
 		}
 		Date expensesDate = getFirstDisbursementDate();
 		
 		amount = amount * FxRateStore.getInstance().getCurrency(currency).getFxRate(expensesDate).getRate() / FxRateStore.getInstance().getCurrency("EUR").getFxRate(expensesDate).getRate();
 		CashFlow cf = new CashFlow(currency, amount, expensesDate, "Expense");
+		cf.setTradeDisbursementCurrency(currency);
 		cfs.add(cf);		
+		Collections.sort(cfs);
 	}
 
 	public void setSovereignRiskType(String sovereignRiskType) {
@@ -909,7 +915,7 @@ public class Trade {
 	
 	public Double calculateEIR() {
 		Double amortisedCost = 1000d;
-		Double eir = 3.0d;
+		Double eir = 0.03d;
 		int count = 0;
 		boolean first = true;
 			
@@ -918,26 +924,41 @@ public class Trade {
 		int lastUp = 1;
 		List<CashFlow> dailyCFList = aggregateDailyCashFlows();
 		
+		Date lastCashFlowDate = getLastCashFlowDate();
+		Date firstDisbursementDate = getFirstDisbursementDate();
 		Calendar gc = new GregorianCalendar();
+		
+		long dayDiff = DateTimeUtils.getDateDiff(firstDisbursementDate, lastDisbursementDate, TimeUnit.DAYS);
+		l.info("dayDiff = " + dayDiff);
 		
 		while ((amortisedCost > 0.1) || (amortisedCost < -0.1)) {
 			
 			List<CashFlow> thisCFList = new ArrayList<>(dailyCFList);
 			CashFlow cf = thisCFList.remove(0);
 			Date cfDate = cf.getCashFlowDate();
-			gc.setTime(getFirstDisbursementDate());
+			gc.setTime(firstDisbursementDate);
 			amortisedCost = 0d; 
-			while (gc.getTime().before(getLastCashFlowDate())) {
+			
+			for (long i = 0; i <= dayDiff; i++) {
 				if (gc.getTime().equals(cfDate)) {
 					amortisedCost = cf.getTradeDisbursementAmount() + (amortisedCost * getDailyEIR(eir));
-					cf = thisCFList.remove(0);
+					if (!thisCFList.isEmpty()) {
+						cf = thisCFList.remove(0);
+					}
 					cfDate = cf.getCashFlowDate();
 				}
 				else {
 					amortisedCost = amortisedCost * getDailyEIR(eir);
 				}
-				
 				gc.add(Calendar.DATE, 1);
+			}
+			if (count % 10 == 0) {
+				if (count == 1000) {
+					l.error(count + " EIR runs for " + getPrimaryKeyDecorator(",") + " amortisedCost = " + amortisedCost + ", not completing!");
+					eir = 0d;
+					return eir;
+				}
+				l.info(count + " eir runs for " + getPrimaryKeyDecorator(",") + " amortisedCost = " + amortisedCost);
 			}
 			
 			//l.info("Amortised cost = " + amortisedCost + ", eir = " + eir);

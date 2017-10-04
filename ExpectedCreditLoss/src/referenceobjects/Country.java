@@ -33,8 +33,8 @@ public class Country {
 				
 		Double stdDev = getStandardDeviationForGDPs(currentYear); 
 		
-		//Double currentGrowth = getCurrentGrowth();
-		Double currentGrowth = 0.814d; //TODO HAACKHACK
+		Double currentGrowth = getCurrentGrowth();
+		//Double currentGrowth = 0.814d; //TODO HAACKHACK
 		
 		NormalDistribution nd = new NormalDistribution(currentGrowth, stdDev);
 		probRecession = nd.cumulativeProbability(0d);

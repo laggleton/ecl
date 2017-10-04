@@ -3,7 +3,7 @@ package bank.ecl;
 import utilities.Logger;
 import utilities.PreferencesLoader;
 
-public class ECLRunner {
+public class EIRRunner {
 	
 	/* 
 	 * Usage:
@@ -25,15 +25,11 @@ public class ECLRunner {
 		PreferencesLoader pl = new PreferencesLoader(preferencesFile);
 		pl.load();
 		
-		ECLDataLoader dl = new ECLDataLoader();
+		EIRDataLoader dl = new EIRDataLoader();
 		dl.loadData();
-		dl.calculateECL();
-		dl.printResults(true);
+		dl.calculateEIR();
 		dl.printCashFlows();
-		dl.printEURResults();
-		//dl.printStageReasons();
-		//dl.printRatings();
-		//dl.printCountries();
+		
 
 	}
 
