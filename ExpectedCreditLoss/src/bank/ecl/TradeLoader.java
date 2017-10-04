@@ -149,7 +149,7 @@ public class TradeLoader {
 					
 				contractReference = lineArray.get(0);
 				
-		//		if (!ctrctList.contains(contractReference)) { continue; }
+			//	if (!ctrctList.contains(contractReference)) { continue; }
 				
 				bookID = lineArray.get(1);
 				balanceSheetDate = InputHandlers.dateMe(lineArray.get(2), DateFormat.ISO_FORMAT);
@@ -224,6 +224,9 @@ public class TradeLoader {
 				t.setRating(ratStore.getRating(overallPDRating));
 				t.setAsOfDate(asOfDate);
 				t.setMaturityDate(maturityDate);
+				t.setSigningDate(originDate);
+				t.setLastAvailabilityDate(lastAvailabilityDate);
+				t.setIndustry(activitySector);
 				
 				LossGivenDefault lgd = new LossGivenDefault(asOfDate, overallLGDRating);
 				List<LossGivenDefault> lgds = new ArrayList<>();

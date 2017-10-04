@@ -58,7 +58,12 @@ public class CashFlow implements Comparable<CashFlow>, Cloneable {
 		}
 		else if (type.equalsIgnoreCase("Principal")) {
 			this.cashFlowType = CashFlowType.XNL;
-			this.cashFlowSubType = CashFlowType.PRINCIPAL;
+			if (amount < 0) {
+				this.cashFlowSubType = CashFlowType.PRINCIPAL;
+			}
+			else {
+				this.cashFlowSubType = CashFlowType.REPAYMENT;
+			}
 		}
 		else if ((type.equalsIgnoreCase("Disbursement")) 
 				|| (type.equalsIgnoreCase("DISB")) 

@@ -31,9 +31,7 @@ public class EIRDataLoader {
 		FXRateLoader.loadFXRates();
 		RatingLoader.loadRatings();
 		CountryLoader.loadCountries();		
-		TradeLoader.loadTrades();
-		CashFlowLoader.loadCFs();
-		//FeeLoader.loadFees();
+		EIRCashFlowLoader.loadCFs();
 	}
 	
 	

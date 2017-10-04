@@ -48,6 +48,9 @@ public class Trade {
 	public Logger l = Logger.getInstance();
 	private Date firstDisbursementDate = null;
 	private Date lastDisbursementDate = null;
+	private Date signingDate;
+	private Date lastAvailabilityDate;
+	private String industry;
 	
 	public Double getFacilityCommitmentAmount() {
 		return facilityCommitmentAmount;
@@ -159,7 +162,7 @@ public class Trade {
 	public Double sumCashFlowTypes(CashFlowType type) {
 		Double amount = new Double(0d);
 		for (CashFlow cf : cfs) {
-			if (cf.getCashFlowType() == type) { amount += cf.getAmount(); }
+			if ((cf.getCashFlowType() == type) || (cf.getCashFlowSubType() == type)) { amount += cf.getTradeDisbursementAmount(); }
 		}
 		return amount;
 	}
@@ -171,11 +174,17 @@ public class Trade {
 		return reeps;
 	}
 	
+	public Double sumAllDisbursements() {
+		Double disbs = new Double(0d);
+		disbs += sumCashFlowTypes(CashFlowType.DISBURSEMENT);
+		return disbs;
+	}
+	
 	public Double sumAllCashFlowsAfter(Date date) {
 		Double amount = new Double(0d);
 		for (CashFlow cf : cfs) {
 			if (cf.getCashFlowDate().after(date)) { 
-				amount += cf.getAmount(); 
+				amount += cf.getTradeDisbursementAmount(); 
 			}
 		}
 		return amount;
@@ -185,7 +194,7 @@ public class Trade {
 		Double amount = new Double(0d);
 		for (CashFlow cf : cfs) {
 			if (cf.getCashFlowDate().before(date)) { 
-				amount += cf.getAmount(); 
+				amount += cf.getTradeDisbursementAmount();
 			}
 		}
 		return amount;
@@ -914,6 +923,10 @@ public class Trade {
 	}
 	
 	public Double calculateEIR() {
+		if (cfs.isEmpty()) {
+			l.error("Can't calculate EIR - no cash flows for " + getAbbreviatedPrimaryKeyDecorator(","));
+			return 0d;
+		}
 		Double amortisedCost = 1000d;
 		Double eir = 0.03d;
 		int count = 0;
@@ -928,8 +941,7 @@ public class Trade {
 		Date firstDisbursementDate = getFirstDisbursementDate();
 		Calendar gc = new GregorianCalendar();
 		
-		long dayDiff = DateTimeUtils.getDateDiff(firstDisbursementDate, lastDisbursementDate, TimeUnit.DAYS);
-		l.info("dayDiff = " + dayDiff);
+		long dayDiff = DateTimeUtils.getDateDiff(firstDisbursementDate, lastCashFlowDate, TimeUnit.DAYS);
 		
 		while ((amortisedCost > 0.1) || (amortisedCost < -0.1)) {
 			
@@ -958,7 +970,7 @@ public class Trade {
 					eir = 0d;
 					return eir;
 				}
-				l.info(count + " eir runs for " + getPrimaryKeyDecorator(",") + " amortisedCost = " + amortisedCost);
+				//l.info(count + " eir runs for " + getPrimaryKeyDecorator(",") + " amortisedCost = " + amortisedCost);
 			}
 			
 			//l.info("Amortised cost = " + amortisedCost + ", eir = " + eir);
@@ -1021,6 +1033,43 @@ public class Trade {
 		return amount;
 	}
 	
+	public void generateDisbursementCashFlows() {
+		//TODO
+		if (sumAllDisbursements().equals(getFacilityCommitmentAmount())) {
+			l.info("Loan " + getAbbreviatedPrimaryKeyDecorator(", ") + "is fully disbursed, no disbursements generated");
+			return;
+		}
+		
+		Date lastAvailabilityDate = getLastAvailabilityDate();
+		if (!lastAvailabilityDate.after(asOfDate)) {
+			l.info("Last Availability Date in past for " + getAbbreviatedPrimaryKeyDecorator(", ") + "no disbursements generated");
+			return;
+		}
+		long dayDiff = DateTimeUtils.getDateDiff(getSigningDate(), lastAvailabilityDate, TimeUnit.DAYS);
+		int bucketLength = (int) dayDiff/10;
+		
+		Calendar gc = new GregorianCalendar();
+		gc.setTime(getSigningDate());
+		Map<Integer, Date> dateMap = new HashMap<>();
+		Date bucketDate = gc.getTime();
+		if (bucketDate.after(asOfDate)) {
+			dateMap.put(new Integer(1), bucketDate);
+		}
+		
+		for (int i = 1; i <= 8; i++) {
+			gc.add(Calendar.DATE, bucketLength);
+			bucketDate = gc.getTime();
+			if (bucketDate.after(asOfDate)) {
+				dateMap.put(i + 1, bucketDate);
+			}
+		}
+		
+		dateMap.put(10, bucketDate);
+				
+		Map<Integer, Double> probabilityProfile = DisbursementProbabilities.getProfile(getSovereignRiskType(), getIndustry());
+		
+	}
+	
 	public String getStagingReason() {
 		return stagingReason;
 	}
@@ -1049,6 +1098,34 @@ public class Trade {
 				+ delimiter + "Stage"
 				+ delimiter + "StageReason"
 				;
+	}
+
+	public void setSigningDate(Date d) {
+		this.signingDate = d;
+	}
+	
+	public Date getSigningDate() {
+		return this.signingDate;
+	}
+
+	public void setLastAvailabilityDate(Date d) {
+		this.lastAvailabilityDate = d;
+	}
+	
+	public Date getLastAvailabilityDate() {
+		return this.lastAvailabilityDate;
+	}
+
+	public void setIndustry(String activitySector) {
+		this.industry = activitySector;
+	}
+	
+	public String getIndustry() {
+		return this.industry;
+	}
+	
+	public String getSovereignRiskType() {
+		return sovereignRiskType;
 	}
 	
 }
