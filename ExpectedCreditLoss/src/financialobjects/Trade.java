@@ -171,6 +171,32 @@ public class Trade {
 		return reeps;
 	}
 	
+	public Double sumAllRepaymentsAndPrepaymentsBefore(Date d) {
+		Double amount = new Double(0d);
+		for (CashFlow cf : cfs) {
+			if (!cf.getCashFlowDate().after(d)) { 
+				if ((cf.getCashFlowSubType().equals(CashFlowType.REPAYMENT))
+						|| (cf.getCashFlowSubType().equals(CashFlowType.PREPAYMENT))) {
+					amount += cf.getAmount(); 
+				}
+			}
+		}
+		return amount;
+	}
+	
+	public Double sumAllRepaymentsAndPrepaymentsAfter(Date d) {
+		Double amount = new Double(0d);
+		for (CashFlow cf : cfs) {
+			if (cf.getCashFlowDate().after(d)) { 
+				if ((cf.getCashFlowSubType().equals(CashFlowType.REPAYMENT))
+						|| (cf.getCashFlowSubType().equals(CashFlowType.PREPAYMENT))) {
+					amount += cf.getAmount(); 
+				}
+			}
+		}
+		return amount;
+	}
+	
 	public Double sumAllCashFlowsAfter(Date date) {
 		Double amount = new Double(0d);
 		for (CashFlow cf : cfs) {
@@ -899,6 +925,81 @@ public class Trade {
 		Collections.sort(cfs);
 		
  	}
+	
+	public void calculateRepayments() {
+		Double allDisbs = 0d; //TODO sumAllDisbursements();
+		Double reepsToDate = sumAllRepaymentsAndPrepaymentsBefore(asOfDate);
+		Double toBeRepayed = allDisbs - reepsToDate;
+		Double futureReeps = sumAllRepaymentsAndPrepaymentsAfter(asOfDate);
+		Double scalingRatio = toBeRepayed / futureReeps;
+		
+		// If no future repayment schedule, create a bullet repayment at maturity
+		if (futureReeps.equals(0d)) {
+			CashFlow cf = new CashFlow(getFirstDisbursementCurrency(), toBeRepayed, getMaturityDate(), "Repayment");
+			cfs.add(cf);
+			return;
+		}
+		
+		// Scale existing repayment schedule
+		for (CashFlow cf : cfs) {
+			if (cf.getCashFlowDate().after(asOfDate)) {
+				if (cf.getCashFlowSubType().equals(CashFlowType.REPAYMENT)
+						|| cf.getCashFlowSubType().equals(CashFlowType.PREPAYMENT)) {
+					cf.setAmount(cf.getAmount() * scalingRatio);
+				}
+			}
+		}
+		
+	}
+	
+	public void applyCancellations() {
+		Double cancellationRate = CancellationProfile.getCancellationRate(sovereignRiskType, "blabla"); //TODO industrySector);
+		Double scalingRatio = 1 - cancellationRate;
+		
+		// Scale future disbursement schedule
+		for (CashFlow cf : cfs) {
+			if (cf.getCashFlowDate().after(asOfDate)) {
+				if (cf.getCashFlowSubType().equals(CashFlowType.DISBURSEMENT)) {
+					cf.setAmount(cf.getAmount() * scalingRatio);
+				}
+			}
+		}
+		
+		// Adjust repayments accordingly
+		calculateRepayments();
+	}
+	
+	public void calculatePrepayments() {
+		Double prepaymentRate = PrepaymentProfile.getPrepaymentRate(country, sovereignRiskType, "blabla"); //TODO industrySector);
+		Double scalingRatio = 1 - prepaymentRate;
+		
+		// Scale future disbursement schedule
+		for (CashFlow cf : cfs) {
+			if (cf.getCashFlowDate().after(asOfDate)) {
+				CashFlow newCf = new CashFlow(cf.getCurrency(), Math.abs(cf.getAmount() * scalingRatio), cf.getCashFlowDate(), "Prepayment");
+				cfs.add(newCf);
+			}
+		}
+		
+		Collections.sort(cfs);
+
+		// Adjust repayments accordingly
+		calculateRepayments();
+		
+		// Remove any potential zero value cfs
+		cleanZeroCashFlows();
+	}
+	
+	public void cleanZeroCashFlows() {
+		for (CashFlow cf : cfs) {
+			if (cf.getCashFlowDate().after(asOfDate)) {
+				if (cf.getAmount().equals(0d)) {
+					cfs.remove(cf);
+				}
+			}
+		}
+	}
+	
 	
 	public Double getAccruedInterestForDate(Date d) {
 		Double accruedInterest = 0d;
