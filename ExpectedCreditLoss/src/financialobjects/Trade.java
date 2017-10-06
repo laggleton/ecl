@@ -38,6 +38,8 @@ public class Trade {
 	private String drlFlag;
 	private String firstDisbursementCurrency;
 	
+	private Integer initialDirection = null;
+	
 	private ECLResult eclResult;
 	private List<ECLIntermediateResult> eclIntermediateList = new ArrayList<>();
 	private String sovereignRiskType;
@@ -47,7 +49,8 @@ public class Trade {
 	
 	public Logger l = Logger.getInstance();
 	private Date firstDisbursementDate = null;
-	private Date lastDisbursementDate = null;
+	private Date lastCashFlowDate = null;
+	private Date firstCashFlowDate = null;
 	private Date signingDate;
 	private Date lastAvailabilityDate;
 	private String industry;
@@ -178,6 +181,32 @@ public class Trade {
 		Double disbs = new Double(0d);
 		disbs += sumCashFlowTypes(CashFlowType.DISBURSEMENT);
 		return disbs;
+	}
+
+	public Double sumAllRepaymentsAndPrepaymentsBefore(Date d) {
+		Double amount = new Double(0d);
+		for (CashFlow cf : cfs) {
+			if (!cf.getCashFlowDate().after(d)) { 
+				if ((cf.getCashFlowSubType().equals(CashFlowType.REPAYMENT))
+						|| (cf.getCashFlowSubType().equals(CashFlowType.PREPAYMENT))) {
+					amount += cf.getAmount(); 
+				}
+			}
+		}
+		return amount;
+	}
+	
+	public Double sumAllRepaymentsAndPrepaymentsAfter(Date d) {
+		Double amount = new Double(0d);
+		for (CashFlow cf : cfs) {
+			if (cf.getCashFlowDate().after(d)) { 
+				if ((cf.getCashFlowSubType().equals(CashFlowType.REPAYMENT))
+						|| (cf.getCashFlowSubType().equals(CashFlowType.PREPAYMENT))) {
+					amount += cf.getAmount(); 
+				}
+			}
+		}
+		return amount;
 	}
 	
 	public Double sumAllCashFlowsAfter(Date date) {
@@ -556,17 +585,50 @@ public class Trade {
 	}
 	
 	public Date getLastCashFlowDate() {
-		if (lastDisbursementDate == null) {
+		if (lastCashFlowDate == null) {
 			List<CashFlow> cfs = getCFs();
 			CashFlow cf = cfs.get(cfs.size() - 1);
-			lastDisbursementDate = cf.getCashFlowDate();
+			lastCashFlowDate = cf.getCashFlowDate();
 		}
-		return lastDisbursementDate;
+		return lastCashFlowDate;
+	}
+	
+	public Date getFirstCashFlowDate() {
+		if (firstCashFlowDate == null) {
+			List<CashFlow> cfs = getCFs();
+			CashFlow cf = cfs.get(0);
+			firstCashFlowDate = cf.getCashFlowDate();
+		}
+		return firstCashFlowDate;
+	}
+	
+	public Integer getInitialDirection() {
+		if (initialDirection == null) {
+			List<CashFlow> cfs = getCFs();
+			
+			for (CashFlow cf : cfs) {
+				if (null == cf.getCashFlowSubType()) { continue; }
+				if (cf.getCashFlowSubType().equals(CashFlowType.DISBURSEMENT)) {
+					initialDirection = new Integer(1);
+					return initialDirection;
+				}
+				else if (cf.getCashFlowSubType().equals(CashFlowType.REPAYMENT)) {
+					initialDirection = new Integer(-1);
+					return initialDirection;
+				}
+			}
+			if (initialDirection == null) {
+				l.error("No Principal CashFlows for " + getAbbreviatedPrimaryKeyDecorator(","));
+				initialDirection = 1;
+			}
+		}
+		return initialDirection;
 	}
 	
 	public void setFirstDisbursementCurrency() {
 		List<CashFlow> cfs = getCFs();
 		for (CashFlow cf : cfs) {
+			if (null == cf.getCashFlowSubType()) { continue; }
 			if (cf.getCashFlowSubType().equals(CashFlowType.DISBURSEMENT)) {
 				firstDisbursementCurrency = cf.getCurrency();
 				break;
@@ -909,6 +971,81 @@ public class Trade {
 		
  	}
 	
+	public void calculateRepayments() {
+		Double allDisbs = 0d; //TODO sumAllDisbursements();
+		Double reepsToDate = sumAllRepaymentsAndPrepaymentsBefore(asOfDate);
+		Double toBeRepayed = allDisbs - reepsToDate;
+		Double futureReeps = sumAllRepaymentsAndPrepaymentsAfter(asOfDate);
+		Double scalingRatio = toBeRepayed / futureReeps;
+		
+		// If no future repayment schedule, create a bullet repayment at maturity
+		if (futureReeps.equals(0d)) {
+			CashFlow cf = new CashFlow(getFirstDisbursementCurrency(), toBeRepayed, getMaturityDate(), "Repayment");
+			cfs.add(cf);
+			return;
+		}
+		
+		// Scale existing repayment schedule
+		for (CashFlow cf : cfs) {
+			if (cf.getCashFlowDate().after(asOfDate)) {
+				if (cf.getCashFlowSubType().equals(CashFlowType.REPAYMENT)
+						|| cf.getCashFlowSubType().equals(CashFlowType.PREPAYMENT)) {
+					cf.setAmount(cf.getAmount() * scalingRatio);
+				}
+			}
+		}
+		
+	}
+	
+	public void applyCancellations() {
+		Double cancellationRate = CancellationProfile.getCancellationRate(sovereignRiskType, industry); 
+		Double scalingRatio = 1 - cancellationRate;
+		
+		// Scale future disbursement schedule
+		for (CashFlow cf : cfs) {
+			if (cf.getCashFlowDate().after(asOfDate)) {
+				if (cf.getCashFlowSubType().equals(CashFlowType.DISBURSEMENT)) {
+					cf.setAmount(cf.getAmount() * scalingRatio);
+				}
+			}
+		}
+		
+		// Adjust repayments accordingly
+		calculateRepayments();
+	}
+	
+	public void calculatePrepayments() {
+		Double prepaymentRate = PrepaymentProfile.getPrepaymentRate(country, sovereignRiskType, industry); 
+		Double scalingRatio = 1 - prepaymentRate;
+		
+		// Scale future disbursement schedule
+		for (CashFlow cf : cfs) {
+			if (cf.getCashFlowDate().after(asOfDate)) {
+				CashFlow newCf = new CashFlow(cf.getCurrency(), Math.abs(cf.getAmount() * scalingRatio), cf.getCashFlowDate(), "Prepayment");
+				cfs.add(newCf);
+			}
+		}
+		
+		Collections.sort(cfs);
+
+		// Adjust repayments accordingly
+		calculateRepayments();
+		
+		// Remove any potential zero value cfs
+		cleanZeroCashFlows();
+	}
+	
+	public void cleanZeroCashFlows() {
+		for (CashFlow cf : cfs) {
+			if (cf.getCashFlowDate().after(asOfDate)) {
+				if (cf.getAmount().equals(0d)) {
+					cfs.remove(cf);
+				}
+			}
+		}
+	}
+	
+	
 	public Double getAccruedInterestForDate(Date d) {
 		Double accruedInterest = 0d;
 		for (CashFlow cf : cfs) {
@@ -938,17 +1075,19 @@ public class Trade {
 		List<CashFlow> dailyCFList = aggregateDailyCashFlows();
 		
 		Date lastCashFlowDate = getLastCashFlowDate();
-		Date firstDisbursementDate = getFirstDisbursementDate();
+		Date firstCashFlowDate = getFirstCashFlowDate();
 		Calendar gc = new GregorianCalendar();
 		
-		long dayDiff = DateTimeUtils.getDateDiff(firstDisbursementDate, lastCashFlowDate, TimeUnit.DAYS);
+		Integer initialDirection = getInitialDirection();
+		
+		long dayDiff = DateTimeUtils.getDateDiff(firstCashFlowDate, lastCashFlowDate, TimeUnit.DAYS);
 		
 		while ((amortisedCost > 0.1) || (amortisedCost < -0.1)) {
 			
 			List<CashFlow> thisCFList = new ArrayList<>(dailyCFList);
 			CashFlow cf = thisCFList.remove(0);
 			Date cfDate = cf.getCashFlowDate();
-			gc.setTime(firstDisbursementDate);
+			gc.setTime(firstCashFlowDate);
 			amortisedCost = 0d; 
 			
 			for (long i = 0; i <= dayDiff; i++) {
@@ -967,8 +1106,15 @@ public class Trade {
 			if (count % 10 == 0) {
 				if (count == 1000) {
 					l.error(count + " EIR runs for " + getPrimaryKeyDecorator(",") + " amortisedCost = " + amortisedCost + ", not completing!");
-					eir = 0d;
-					return eir;
+					if (initialDirection.equals(getInitialDirection())) {
+						l.error("Trying alternative direction");
+						initialDirection *= -1;
+						eir = 3d;
+					}
+					else {
+						eir = 0d;
+						return eir;
+					}
 				}
 				//l.info(count + " eir runs for " + getPrimaryKeyDecorator(",") + " amortisedCost = " + amortisedCost);
 			}
@@ -976,9 +1122,10 @@ public class Trade {
 			//l.info("Amortised cost = " + amortisedCost + ", eir = " + eir);
 			lastUp = up;
 			up = (amortisedCost > 0) ? 1 : -1;
+			up *= initialDirection;
 			if (first) { first = false; }
 			else if (up != lastUp) { step /= 10d; }
-			eir += (step * (double) up);
+			eir += (step * (double) up );
 			count++;
 		}
 		//l.info("Count to calculate eir = " + count);
@@ -1034,7 +1181,6 @@ public class Trade {
 	}
 	
 	public void generateDisbursementCashFlows() {
-		//TODO
 		if (sumAllDisbursements().equals(getFacilityCommitmentAmount())) {
 			l.info("Loan " + getAbbreviatedPrimaryKeyDecorator(", ") + "is fully disbursed, no disbursements generated");
 			return;

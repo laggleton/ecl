@@ -56,10 +56,11 @@ public class CashFlow implements Comparable<CashFlow>, Cloneable {
 			this.cashFlowType = CashFlowType.FEE;
 			this.cashFlowSubType = CashFlowType.FEE;
 		}
-		else if (type.equalsIgnoreCase("Principal")) {
+		else if (type.equalsIgnoreCase("Principal")
+				|| type.equalsIgnoreCase("XNL")) {
 			this.cashFlowType = CashFlowType.XNL;
 			if (amount < 0) {
-				this.cashFlowSubType = CashFlowType.PRINCIPAL;
+				this.cashFlowSubType = CashFlowType.DISBURSEMENT;
 			}
 			else {
 				this.cashFlowSubType = CashFlowType.REPAYMENT;
@@ -193,10 +194,10 @@ public class CashFlow implements Comparable<CashFlow>, Cloneable {
 	
 	public boolean isCashFlowInEAD() {
 		if (cashFlowDate.after(BusinessDate.getInstance().getDate())) {
-			if ((cashFlowType.equals(CashFlowType.DISBURSEMENT))
-					|| (cashFlowType.equals(CashFlowType.INTEREST))
-					|| (cashFlowType.equals(CashFlowType.REPAYMENT))
-					|| (cashFlowType.equals(CashFlowType.PREPAYMENT))) {
+			if ((cashFlowSubType.equals(CashFlowType.DISBURSEMENT))
+					|| (cashFlowSubType.equals(CashFlowType.INTEREST))
+					|| (cashFlowSubType.equals(CashFlowType.REPAYMENT))
+					|| (cashFlowSubType.equals(CashFlowType.PREPAYMENT))) {
 				return true;
 			}
 		}
