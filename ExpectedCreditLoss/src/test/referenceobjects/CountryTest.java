@@ -55,7 +55,7 @@ public class CountryTest {
 		ctry.setProbabilityOfRecessionAndGrowthFromVariables(growth, rmse);
 		Double rmseRec = ctry.getProbabilityOfRecession();
 				
-		Double expectedResult = 0.19303d;
+		Double expectedResult = 0.20330d;
 		assertEquals(expectedResult, rmseRec, 0.01d);
 	}
 	

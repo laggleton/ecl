@@ -62,13 +62,13 @@ public class Country {
 	}
 	
 	public void setProbabilityOfRecessionAndGrowth() {
-		setProbabilityOfRecessionAndGrowthFromHack();
-		/*
+		//setProbabilityOfRecessionAndGrowthFromHack();
+		
 		if (!countryName.equals("RG")) {
 			setProbabilityOfRecessionAndGrowthFromRMSE();
 		}
 		setProbabilityOfRecessionAndGrowthFromStdDev();
-		*/ 
+		 
 	}
 		
 	public void setProbabilityOfRecessionAndGrowthFromRMSE() {
@@ -166,13 +166,13 @@ public class Country {
 				error = gdp.getActualGrowth() - gdp.getOneYearPredictedGrowth();
 				square = Math.pow(error, 2);
 				runningSum += square;
+				count++;
 			}
-			count++;
 		}
 		
 		Double mse = runningSum / (double) count;
 		Double rmse = Math.sqrt(mse);
-		//l.info(getCountryName() + ", rmse = " + rmse);
+		//l.warn(getCountryName() + ", rmse = " + rmse);
 		return rmse;
 	}
 	
@@ -209,7 +209,7 @@ public class Country {
 			}
 		}
 		l.error("No growth value for " + countryName + " for " + year);
-		return null;
+		return 0d;
 	}
 	
 	public void setProbabilityOfRecessionAndGrowthFromHack() {
