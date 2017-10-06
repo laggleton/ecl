@@ -17,6 +17,8 @@ public class Trade {
 	
 	private Integer notional;
 	private Currency currency;
+	
+
 	private List<CashFlow> cfs = new ArrayList<>();
 	private List<CashFlow> reversedCFs = new ArrayList<>();
 	private List<LossGivenDefault> lgds = new ArrayList<>();
@@ -877,15 +879,22 @@ public class Trade {
 	
 	public void generateExpensesCashFlow() {
 		String currency = getFirstDisbursementCurrency();
+		Double facCommitmentAmount = getFacilityCommitmentAmount();
+		String tradeCurrency = getCurrency().getCurrencyName();
+		Date expensesDate = getFirstDisbursementDate();
+		
+		facCommitmentAmount /= FxRateStore.getInstance().getCurrency(tradeCurrency).getFxRate(asOfDate).getRate();
+		facCommitmentAmount *= FxRateStore.getInstance().getCurrency("EUR").getFxRate(asOfDate).getRate();
+		
 		Double amount = 0d;
 		if (sovereignRiskType.equals("N")) {
 			amount = -5000d;
 		}
 		else {
 			amount = -22000d;
-			amount += (facilityCommitmentAmount / 1000000d) * -450d;
+			amount += (facCommitmentAmount / 1000000d) * -450d;
 		}
-		Date expensesDate = getFirstDisbursementDate();
+		
 		
 		amount = amount * FxRateStore.getInstance().getCurrency("EUR").getFxRate(expensesDate).getRate() / FxRateStore.getInstance().getCurrency(currency).getFxRate(expensesDate).getRate();
 		CashFlow cf = new CashFlow(currency, amount, expensesDate, "Expense");
@@ -1272,6 +1281,14 @@ public class Trade {
 	
 	public String getSovereignRiskType() {
 		return sovereignRiskType;
+	}
+	
+	public Currency getCurrency() {
+		return currency;
+	}
+
+	public void setCurrency(Currency currency) {
+		this.currency = currency;
 	}
 	
 }

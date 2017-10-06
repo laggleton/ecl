@@ -149,7 +149,7 @@ public class TradeLoader {
 					
 				contractReference = lineArray.get(0);
 				
-				if (!ctrctList.contains(contractReference)) { continue; }
+				//if (!ctrctList.contains(contractReference)) { continue; }
 				
 				bookID = lineArray.get(1);
 				balanceSheetDate = InputHandlers.dateMe(lineArray.get(2), DateFormat.ISO_FORMAT);
