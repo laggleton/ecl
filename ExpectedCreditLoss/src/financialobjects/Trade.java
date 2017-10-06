@@ -887,7 +887,7 @@ public class Trade {
 		}
 		Date expensesDate = getFirstDisbursementDate();
 		
-		amount = amount * FxRateStore.getInstance().getCurrency(currency).getFxRate(expensesDate).getRate() / FxRateStore.getInstance().getCurrency("EUR").getFxRate(expensesDate).getRate();
+		amount = amount * FxRateStore.getInstance().getCurrency("EUR").getFxRate(expensesDate).getRate() / FxRateStore.getInstance().getCurrency(currency).getFxRate(expensesDate).getRate();
 		CashFlow cf = new CashFlow(currency, amount, expensesDate, "Expense");
 		cf.setTradeDisbursementCurrency(currency);
 		cfs.add(cf);		

@@ -27,6 +27,7 @@ public class ECLRunner {
 		
 		ECLDataLoader dl = new ECLDataLoader();
 		dl.loadData();
+		//dl.generateExpenses();
 		dl.calculateECL();
 		dl.printResults(true);
 		dl.printCashFlows();

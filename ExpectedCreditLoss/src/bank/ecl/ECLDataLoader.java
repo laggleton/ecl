@@ -35,6 +35,11 @@ public class ECLDataLoader {
 		CashFlowLoader.loadCFs();
 	}
 	
+	public void generateExpenses() {
+		for (Trade t : TradeStore.getInstance().getAllTrades()) {
+			t.generateExpensesCashFlow();
+		}
+	}
 	
 	public void calculateECL() {
 		Scenario s = new Scenario(1.0d);

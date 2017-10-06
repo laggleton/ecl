@@ -76,6 +76,10 @@ public class EIRCashFlowLoader {
 				currency = lineArray.get(8);
 				amount = InputHandlers.doubleMe(lineArray.get(9));
 				
+				//Adding book level granularity
+				contractReference += "/" + bookID;
+				//contractReference += "_" + currency;
+				
 				if (amount == 0d) { continue; }
 				
 				if ((null == cashFlowSubType) || (cashFlowSubType.isEmpty())) { cashFlowSubType = cashFlowType; }

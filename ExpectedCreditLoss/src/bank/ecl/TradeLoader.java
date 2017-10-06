@@ -149,7 +149,7 @@ public class TradeLoader {
 					
 				contractReference = lineArray.get(0);
 				
-			//	if (!ctrctList.contains(contractReference)) { continue; }
+				if (!ctrctList.contains(contractReference)) { continue; }
 				
 				bookID = lineArray.get(1);
 				balanceSheetDate = InputHandlers.dateMe(lineArray.get(2), DateFormat.ISO_FORMAT);
@@ -199,6 +199,9 @@ public class TradeLoader {
 				String[] split = contractReference.split("/");
 				String dealId = split[0];
 				String facilityId = split[1];
+				
+				//Adding book level granularity
+				contractReference += "/" + bookID;
 				
 				t = new Trade(dealId, facilityId, bookID, contractReference, principal.intValue(), currency);
 				
@@ -253,10 +256,10 @@ public class TradeLoader {
 	public static List<String> getInScopeContractRefs(){
 		List<String> list = new ArrayList<>();
 		list.add("1863_AZERBAREP/2090");
-	/*	list.add("34739_ANELIKBKYV/59198");
+		list.add("34739_ANELIKBKYV/59198");
 		list.add("35091_PROMSVYAZB/47410");
 		list.add("35862/49203");
-		//list.add("37599_KYIVSKMETU/48255");
+		list.add("37599_KYIVSKMETU/48255");
 		list.add("39353_BKREPUBTBL/51493");
 		list.add("41840_GRANDPLAZA/70632");
 		list.add("42564_CAZINWASTE/57470");
@@ -275,7 +278,8 @@ public class TradeLoader {
 		list.add("47383_MVCARGOLCU/66604");
 		list.add("47598_ZOHLY/70685");
 		list.add("47704_NETBORSANT/67324");
-		list.add("47968_FRUTAROMGB/67941");*/
+		list.add("47968_FRUTAROMGB/67941");
+		list.add("EBRD/EQUITIES/BK120/M6_45954");
 		return list;
 	}
 	
