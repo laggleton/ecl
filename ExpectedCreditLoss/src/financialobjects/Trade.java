@@ -981,7 +981,7 @@ public class Trade {
  	}
 	
 	public void calculateRepayments() {
-		Double allDisbs = 0d; //TODO sumAllDisbursements();
+		Double allDisbs = sumAllDisbursements();
 		Double reepsToDate = sumAllRepaymentsAndPrepaymentsBefore(asOfDate);
 		Double toBeRepayed = allDisbs - reepsToDate;
 		Double futureReeps = sumAllRepaymentsAndPrepaymentsAfter(asOfDate);
@@ -1137,6 +1137,8 @@ public class Trade {
 			eir += (step * (double) up );
 			count++;
 		}
+		
+		this.EIR = eir;
 		//l.info("Count to calculate eir = " + count);
 		return eir;
 	}
@@ -1190,6 +1192,7 @@ public class Trade {
 	}
 	
 	public void generateDisbursementCashFlows() {
+		
 		if (sumAllDisbursements().equals(getFacilityCommitmentAmount())) {
 			l.info("Loan " + getAbbreviatedPrimaryKeyDecorator(", ") + "is fully disbursed, no disbursements generated");
 			return;
@@ -1200,6 +1203,15 @@ public class Trade {
 			l.info("Last Availability Date in past for " + getAbbreviatedPrimaryKeyDecorator(", ") + "no disbursements generated");
 			return;
 		}
+		
+		Map<Integer, Double> probabilityProfile = DisbursementProbabilities.getProfile(getSovereignRiskType(), getIndustry());
+		
+		if (null == probabilityProfile) {
+			l.error("No disbursements generated");
+			return;
+		}
+		
+		
 		long dayDiff = DateTimeUtils.getDateDiff(getSigningDate(), lastAvailabilityDate, TimeUnit.DAYS);
 		int bucketLength = (int) dayDiff/10;
 		
@@ -1220,9 +1232,27 @@ public class Trade {
 		}
 		
 		dateMap.put(10, bucketDate);
-				
-		Map<Integer, Double> probabilityProfile = DisbursementProbabilities.getProfile(getSovereignRiskType(), getIndustry());
 		
+		double sumProbabilities = 0d;
+		for (Integer i : dateMap.keySet()) {
+			sumProbabilities += probabilityProfile.get(i);
+		}
+		
+		String currency = getFirstDisbursementCurrency();
+		Double outstandingDisbursements = getFacilityCommitmentAmount() - sumAllDisbursements();
+		
+		for (Integer i : dateMap.keySet()) {
+			Double amount = -1d * outstandingDisbursements * probabilityProfile.get(i) / sumProbabilities;
+			CashFlow cf = new CashFlow(currency, amount, dateMap.get(i), "Disbursement");
+			cfs.add(cf);
+		}
+		
+		// Adjust repayments accordingly
+		calculateRepayments();
+	}
+	
+	public void calculateInterest() {
+		//TODO
 	}
 	
 	public String getStagingReason() {

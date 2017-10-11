@@ -38,7 +38,7 @@ public class FXConverter {
 		
 		BusinessDateLoader.loadAsOfDateFromPreferences();
 		FXRateLoader.loadFXRates();
-		TradeLoader.loadTrades();
+		TradeLoader.loadTrades(false); // Does not expect or load EIR from trade file
 		CashFlowLoader.loadCFs();
 		FeeLoader.loadFees();
 		TradeLoader.setFirstDisbursementCurrency();

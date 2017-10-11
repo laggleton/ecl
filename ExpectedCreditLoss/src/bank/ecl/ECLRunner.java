@@ -25,8 +25,8 @@ public class ECLRunner {
 		PreferencesLoader pl = new PreferencesLoader(preferencesFile);
 		pl.load();
 		
-		ECLDataLoader dl = new ECLDataLoader();
-		dl.loadData();
+		FullDataLoader dl = new FullDataLoader();
+		dl.loadDataForECL();
 		//dl.generateExpenses();
 		dl.calculateECL();
 		dl.printResults(true);

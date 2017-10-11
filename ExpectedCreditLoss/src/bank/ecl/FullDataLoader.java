@@ -20,24 +20,64 @@ import utilities.DateTimeUtils;
 import utilities.Logger;
 import utilities.PreferencesStore;
 
-public class ECLDataLoader {
+public class FullDataLoader {
 	
 	private PreferencesStore ps = PreferencesStore.getInstance();
 	
 	private Logger l = Logger.getInstance();
 	
-	public void loadData() {
+	public void loadDataForECL() {
 		BusinessDateLoader.loadAsOfDateFromPreferences();
 		FXRateLoader.loadFXRates();
 		RatingLoader.loadRatings();
 		CountryLoader.loadCountries();		
-		TradeLoader.loadTrades();
+		TradeLoader.loadTrades(true); // Expects and loads EIR from file
 		CashFlowLoader.loadCFs();
+	}
+	
+	public void loadDataForFullRun() {
+		BusinessDateLoader.loadAsOfDateFromPreferences();
+		FXRateLoader.loadFXRates();
+		RatingLoader.loadRatings();
+		CountryLoader.loadCountries();		
+		TradeLoader.loadTrades(false); // Does not expect or load EIR from trade file
+		CashFlowLoader.loadCFs();
+		FeeLoader.loadFees();
 	}
 	
 	public void generateExpenses() {
 		for (Trade t : TradeStore.getInstance().getAllTrades()) {
 			t.generateExpensesCashFlow();
+		}
+	}
+	
+	public void generateDisbursements() {
+		for (Trade t : TradeStore.getInstance().getAllTrades()) {
+			t.generateDisbursementCashFlows();
+		}
+	}
+	
+	public void applyCancellations() {
+		for (Trade t : TradeStore.getInstance().getAllTrades()) {
+			t.applyCancellations();
+		}
+	}
+	
+	public void calculatePrepayments() {
+		for (Trade t : TradeStore.getInstance().getAllTrades()) {
+			t.calculatePrepayments();
+		}
+	}
+	
+	public void calculateInterest() {
+		for (Trade t : TradeStore.getInstance().getAllTrades()) {
+			t.calculateInterest();
+		}
+	}
+	
+	public void calculateEIR() {
+		for (Trade t : TradeStore.getInstance().getAllTrades()) {
+			t.calculateEIR();
 		}
 	}
 	

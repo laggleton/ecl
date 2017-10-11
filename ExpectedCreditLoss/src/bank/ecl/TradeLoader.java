@@ -71,7 +71,7 @@ public class TradeLoader {
 	 * RollConvention
 	 * LastAvailabilityDate
 	 */
-	public static void loadTrades() {
+	public static void loadTrades(boolean loadEIR) {
 		String line = "";
 		List<String> lineArray;
 		boolean first = true;
@@ -194,7 +194,7 @@ public class TradeLoader {
 				rateFloor = lineArray.get(41);
 				rollConvention = lineArray.get(42);
 				lastAvailabilityDate = InputHandlers.dateMe(lineArray.get(43), DateFormat.ISO_FORMAT);
-				effectiveYield = InputHandlers.doubleMe(lineArray.get(44));
+				
 				
 				String[] split = contractReference.split("/");
 				String dealId = split[0];
@@ -205,11 +205,16 @@ public class TradeLoader {
 				
 				t = new Trade(dealId, facilityId, bookID, contractReference, principal.intValue(), currency);
 				
-				t.setEIR(effectiveYield);
+				
 				t.setCountry(CountryStore.getInstance().getCountry(countryOfRisk));
 				t.setFacilityCommitmentAmount(facilityCommitmentAmount);
 				t.setWatchlist(watchList);
 				t.setDrlFlag(drlFlag);
+				
+				if (loadEIR) {
+					effectiveYield = InputHandlers.doubleMe(lineArray.get(44));
+					t.setEIR(effectiveYield);
+				}
 				
 				/*
 				 * Tweak the below for rating upgrade/downgrade
