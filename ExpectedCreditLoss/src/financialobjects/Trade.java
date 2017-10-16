@@ -1081,11 +1081,11 @@ public class Trade {
 				long dayDiff = DateTimeUtils.getDateDiff(lastCFdate, cf.getCashFlowDate(), TimeUnit.DAYS);
 				double cfPrePaymentRate = (1d-(Math.pow(1d-scalingRatio,dayDiff/365d)));
 				
+				//Create new cash flow
+				CashFlow newCf = new CashFlow(cf.getCurrency(), Math.abs(balance * cfPrePaymentRate), cf.getCashFlowDate(), "Prepayment", cf.getTradeDisbursementCurrency());
+
 				// Update balance
 				balance += cf.getTradeDisbursementAmount();
-				
-				//Create new cash flow
-				CashFlow newCf = new CashFlow(cf.getCurrency(), Math.abs(cf.getAmount() * cfPrePaymentRate), cf.getCashFlowDate(), "Prepayment", cf.getTradeDisbursementCurrency());
 				
 				// If cash flow amount more than balance - set cash flow to balance value and flatten
 				if (Math.abs(balance) < newCf.getTradeDisbursementAmount()) {
