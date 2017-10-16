@@ -148,7 +148,7 @@ public class TradeLoader {
 				lineArray = FileUtils.parseLine(line, delimiter);
 					
 				contractReference = lineArray.get(0);
-				
+				//if (!contractReference.equals("47200_STEREOLTD/66132/BK100/EUR")) { continue; }
 				//if (!ctrctList.contains(contractReference)) { continue; }
 				
 				bookID = lineArray.get(1);
@@ -194,14 +194,14 @@ public class TradeLoader {
 				rateFloor = lineArray.get(41);
 				rollConvention = lineArray.get(42);
 				lastAvailabilityDate = InputHandlers.dateMe(lineArray.get(43), DateFormat.ISO_FORMAT);
-				
+				if (lastAvailabilityDate.after(maturityDate)) { 
+					l.info("Last availability date after maturity date for trade " + contractReference);
+				//	maturityDate = lastAvailabilityDate;
+				}
 				
 				String[] split = contractReference.split("/");
 				String dealId = split[0];
 				String facilityId = split[1];
-				
-				//Adding book level granularity
-				contractReference += "/" + bookID;
 				
 				t = new Trade(dealId, facilityId, bookID, contractReference, principal.intValue(), currency);
 				

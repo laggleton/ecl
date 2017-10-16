@@ -15,4 +15,6 @@ public enum CashFlowType {
 	APP,
 	APR,
 	FF,
+	BSF,
+	PDF
 }

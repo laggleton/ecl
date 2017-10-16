@@ -1,6 +1,5 @@
 package referenceobjects;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import utilities.Logger;

@@ -80,9 +80,6 @@ public class CashFlowLoader {
 				
 				cf = new CashFlow(currency, amount, paymentDate, cashFlowSubType);
 				
-				//Adding book level granularity
-				contractReference += "/" + bookID;
-				
 				if (tradeStore.getTrade(contractReference) != null) { 
 					tradeStore.getTrade(contractReference).addCF(cf);
 				}

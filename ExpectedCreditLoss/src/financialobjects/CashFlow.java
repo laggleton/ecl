@@ -15,7 +15,7 @@ public class CashFlow implements Comparable<CashFlow>, Cloneable {
 	private String tradeDisbursementCurrency;
 	private Double tradeDisbursementAmount;
 	
-	private Date cashFlowDate = new Date();
+	private Date cashFlowDate = null;
 	private CashFlowType cashFlowType;
 	private Logger l = Logger.getInstance();
 		
@@ -30,10 +30,8 @@ public class CashFlow implements Comparable<CashFlow>, Cloneable {
 			this.cashFlowDate = DateFormat.ISO_FORMAT.parse(date);
 		}
 		catch(ParseException pe) {
-			System.out.println("ERROR: could not parse date in string \"" +
-	                date + "\"");
-			System.out.println(pe.toString());
-			System.out.println(pe.getStackTrace());
+			l.error("Could not parse date in string " + date);
+			l.error(pe);
 		}
 		mapCashFlowType(type);
 	}
@@ -55,6 +53,14 @@ public class CashFlow implements Comparable<CashFlow>, Cloneable {
 		else if (type.equalsIgnoreCase("FEE")) {
 			this.cashFlowType = CashFlowType.FEE;
 			this.cashFlowSubType = CashFlowType.FEE;
+		}
+		else if (type.equalsIgnoreCase("BSF")) {
+			this.cashFlowType = CashFlowType.FEE;
+			this.cashFlowSubType = CashFlowType.BSF;
+		}
+		else if (type.equalsIgnoreCase("PDF")) {
+			this.cashFlowType = CashFlowType.FEE;
+			this.cashFlowSubType = CashFlowType.PDF;
 		}
 		else if (type.equalsIgnoreCase("Principal")
 				|| type.equalsIgnoreCase("XNL")) {
@@ -89,7 +95,8 @@ public class CashFlow implements Comparable<CashFlow>, Cloneable {
 			this.cashFlowSubType = CashFlowType.PREPAYMENT;
 		}
 		else if ((type.equalsIgnoreCase("Interest"))
-				|| (type.equalsIgnoreCase("INT")) ) {
+				|| (type.equalsIgnoreCase("INT"))
+				|| (type.equalsIgnoreCase("IPR"))) {
 			this.cashFlowType = CashFlowType.INT;
 			this.cashFlowSubType = CashFlowType.INTEREST;
 		}
@@ -100,7 +107,7 @@ public class CashFlow implements Comparable<CashFlow>, Cloneable {
 			this.cashFlowSubType = CashFlowType.EXPENSE;
 		}
 		else {
-			Logger.getInstance().warn("Cash Flow Type " + cashFlowType + "not recognised!");
+			Logger.getInstance().warn("Cash Flow Type " + type + "not recognised!");
 		}
 	}
 	
@@ -109,6 +116,14 @@ public class CashFlow implements Comparable<CashFlow>, Cloneable {
 		this.amount = amount;
 		this.cashFlowDate = date;
 		mapCashFlowType(type);
+	}
+	
+	public CashFlow(String currency, Double amount, Date date, String type, String tradeDisbursementCurrency) {
+		this.currency = currency;
+		this.amount = amount;
+		this.cashFlowDate = date;
+		mapCashFlowType(type);
+		setTradeDisbursementCurrency(tradeDisbursementCurrency);
 	}
 
 	public String getCurrency() {
@@ -154,6 +169,9 @@ public class CashFlow implements Comparable<CashFlow>, Cloneable {
 	
 	public void updateTradeDisbursementAmount() {
 		FxRateStore fxS = FxRateStore.getInstance();
+		if (null == tradeDisbursementCurrency) {
+			l.error("No tradeDisbursement currency set! Make sure to call setFirstDisbursementCurrency() on trade");
+		}
 		if (!tradeDisbursementCurrency.equals(currency)) {
 			double fxRate = 1.0d;
 			double flowRate = fxS.getCurrency(currency).getFxRate(this.cashFlowDate).getRate();

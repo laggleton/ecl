@@ -3,7 +3,7 @@ package bank.ecl;
 import utilities.Logger;
 import utilities.PreferencesLoader;
 
-public class ECLRunner {
+public class FullLoanRunner {
 	
 	/* 
 	 * Usage:
@@ -26,17 +26,24 @@ public class ECLRunner {
 		pl.load();
 		
 		FullDataLoader dl = new FullDataLoader();
-		dl.loadDataForECL();
+		dl.loadDataForFullRun();
+				
+		//Cash Flow steps
+		dl.generateDisbursements();
+		dl.applyCancellations();
+		dl.calculatePrepayments();
+		//dl.calculateInterest();
+		
+		//EIR
 		//dl.calculateEIR();
-		//dl.printEIR();
-		//dl.generateExpenses();
-		dl.calculateECL();
-		dl.printResults(true);
+		
+		//ECL
+		//dl.calculateECL();
+		
+		//Output
+		//dl.printResults(true);
 		dl.printCashFlows();
-		dl.printEURResults();
-		//dl.printStageReasons();
-		//dl.printRatings();
-		//dl.printCountries();
+		//dl.printEURResults();
 
 	}
 

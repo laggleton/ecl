@@ -42,7 +42,9 @@ public class FullDataLoader {
 		CountryLoader.loadCountries();		
 		TradeLoader.loadTrades(false); // Does not expect or load EIR from trade file
 		CashFlowLoader.loadCFs();
-		FeeLoader.loadFees();
+		//FeeLoader.loadFees();
+		setFirstDisbursementCurrencies();
+		
 	}
 	
 	public void generateExpenses() {
@@ -78,6 +80,12 @@ public class FullDataLoader {
 	public void calculateEIR() {
 		for (Trade t : TradeStore.getInstance().getAllTrades()) {
 			t.calculateEIR();
+		}
+	}
+	
+	public void printEIR() {
+		for (Trade t : TradeStore.getInstance().getAllTrades()) {
+			l.info(t.getAbbreviatedPrimaryKeyDecorator(",") + t.getEIR());
 		}
 	}
 	
@@ -267,6 +275,12 @@ public class FullDataLoader {
 		}
 		catch (IOException e) {
 			l.error(e);
+		}
+	}
+	
+	public void setFirstDisbursementCurrencies() {
+		for (Trade t : TradeStore.getInstance().getAllTrades()) {
+			t.setFirstDisbursementCurrency();
 		}
 	}
 }

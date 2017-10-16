@@ -59,7 +59,7 @@ public class TradeTest {
 	@Test
 	public void evaluatesCalculateDiscountFactor() {
 		setUpTestTrade();
-		Date startDate = new Date(); Date endDate = new Date();
+		Date startDate = null; Date endDate = null;
 		try {
 			startDate = DateFormat.ISO_FORMAT.parse("2017-05-31");
 			endDate = DateFormat.ISO_FORMAT.parse("2017-08-31");
@@ -100,7 +100,7 @@ public class TradeTest {
 		
 	@Test
 	public void evaluatesCalculateEAD() {
-		Date eadDate = new Date();
+		Date eadDate = null;
 		setUpTestTrade();
 		double rate = 0.03895495d;
 		
@@ -178,6 +178,14 @@ public class TradeTest {
 	}
 	
 	private void setUpTestTrade() {
+		
+		try {
+			BusinessDate.getInstance().initialise(DateFormat.ISO_FORMAT.parse("2017-05-31"));
+		}
+		catch (ParseException pe) {
+			System.out.println("Failed to parse date: " + pe.toString());
+		}
+		
 		t = new Trade("11865_MARITZAIZT", "16324", "BK100", "16324", 100000, "EUR");
 		t.setEIR(0.03895495d);
 		t.setRating(new Rating("6.3"));
@@ -186,7 +194,6 @@ public class TradeTest {
 		t.setCreditRating("6.3");
 						
 		try {
-			BusinessDate.getInstance().initialise(DateFormat.ISO_FORMAT.parse("2017-05-31"));
 			t.setAsOfDate(DateFormat.ISO_FORMAT.parse("2017-05-31"));
 			t.setMaturityDate(DateFormat.ISO_FORMAT.parse("2023-02-28"));
 		}
