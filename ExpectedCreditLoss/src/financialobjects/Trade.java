@@ -351,7 +351,7 @@ public class Trade {
 		long diff = maturityDate.getTime() - asOfDate.getTime();
 		long days =  TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
 		int periods = (int) (days/periodLength);
-		if (periods == 0) { periods = 1; }
+		periods++;
 		
 		int daysFromAsOf;
 		Double ead = new Double(0d);
@@ -375,7 +375,7 @@ public class Trade {
 		gc = GregorianCalendar.getInstance();
 		gc.setTime(asOfDate);
 		gc.add(Calendar.YEAR, 1);
-						
+		
 		for (int i = 1; i <= periods; i++) {
 			
 			gc.setTime(asOfDate);
@@ -396,7 +396,14 @@ public class Trade {
 			ECLIntermediateResult e = new ECLIntermediateResult(dealId, facilityId, bookId, tradeIdentifier, getFirstDisbursementCurrency());
 			
 			discountFactor = getDiscountFactor(asOfDate, periodStartDate, eir);
-			ead = calculateEAD(periodStartDate, cfs, eir);
+			
+			if (periodStartDate.before(getFirstDisbursementDate())) {
+				ead = 0d;
+			}
+			else {
+				ead = calculateEAD(periodStartDate, cfs, eir);
+			}
+			
 			
 			pd = calculateAbsolutePD(asOfDate, periodEndDate, pds);
 			incrementalPD = calculateIncrementalPD(lastPD, pd);
@@ -531,7 +538,9 @@ public class Trade {
 		Double discountedCashFlowAmount = new Double(0d);
 				
 		for (CashFlow cf : cfs) {
-			if (cf.getCashFlowDate().after(eadDate)) { 
+			if (cf.getCashFlowDate().after(eadDate)
+					&& (cf.getCashFlowType().equals(CashFlowType.XNL)
+							|| cf.getCashFlowType().equals(CashFlowType.INT))) { 
 				cashFlowAmount = cf.getAmount();
 				discountedCashFlowAmount = cashFlowAmount * getDiscountFactor(eadDate, cf.getCashFlowDate(), eir);
 				ead += discountedCashFlowAmount;
