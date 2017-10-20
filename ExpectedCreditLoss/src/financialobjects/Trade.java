@@ -318,6 +318,21 @@ public class Trade {
 		}
 		if (cfs.isEmpty()) {
 			l.info("No Cash Flows therefore no ECL calculated for " + getAbbreviatedPrimaryKeyDecorator(","));
+			ECLIntermediateResult e = new ECLIntermediateResult(dealId, facilityId, bookId, tradeIdentifier, getFirstDisbursementCurrency());
+			e.setPeriodDate(asOfDate);
+			e.setDiscountFactor(1d);
+			e.setProbabilityOfDefault(0d);
+			e.setIncrementalPD(0d);
+			e.setPeriodECL(0d);
+			e.setEad(0d);
+			e.setLgd(0d);
+			eclIntermediateList.add(e);
+			eclResult = new ECLResult(dealId, facilityId, bookId, tradeIdentifier, getFirstDisbursementCurrency());
+			eclResult.setLifetimeECL(0d);
+			eclResult.setTwelveMonthECL(0d);
+			eclResult.setEir(0d);
+			eclResult.setImpairmentStageIFRS9(assessIFRS9Staging());
+			eclResult.setStagingReason(stagingReason);
 			return;
 		}
 		
@@ -398,6 +413,9 @@ public class Trade {
 			discountFactor = getDiscountFactor(asOfDate, periodStartDate, eir);
 			
 			if (periodStartDate.before(getFirstDisbursementDate())) {
+				ead = 0d;
+			}
+			else if (getTradeBalance(periodStartDate) > -1d) {
 				ead = 0d;
 			}
 			else {

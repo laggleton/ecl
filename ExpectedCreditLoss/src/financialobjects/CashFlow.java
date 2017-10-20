@@ -38,7 +38,8 @@ public class CashFlow implements Comparable<CashFlow>, Cloneable {
 	
 	private void mapCashFlowType(String type) {
 		if ((type.equalsIgnoreCase("FEF")
-				|| type.equalsIgnoreCase("F/F"))) {
+				|| type.equalsIgnoreCase("F/F")
+				|| type.equalsIgnoreCase("F/E"))) {
 			this.cashFlowType = CashFlowType.FEE;
 			this.cashFlowSubType = CashFlowType.FEF;
 		}
@@ -107,7 +108,7 @@ public class CashFlow implements Comparable<CashFlow>, Cloneable {
 			this.cashFlowSubType = CashFlowType.EXPENSE;
 		}
 		else {
-			Logger.getInstance().warn("Cash Flow Type " + type + "not recognised!");
+			Logger.getInstance().warn("Cash Flow Type " + type + " not recognised!");
 		}
 	}
 	

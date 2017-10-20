@@ -26,7 +26,7 @@ public class ECLRunner {
 		pl.load();
 		
 		FullDataLoader dl = new FullDataLoader();
-		dl.loadDataForECL();
+		dl.loadDataForFullRun();
 		//dl.calculateEIR();
 		//dl.printEIR();
 		//dl.generateExpenses();
