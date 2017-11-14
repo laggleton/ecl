@@ -1181,7 +1181,7 @@ public class Trade {
 		int count = 0;
 		boolean first = true;
 			
-		Double step = 1.0d;
+		Double step = 0.01d;
 		int up = 1;
 		int lastUp = 1;
 		List<CashFlow> dailyCFList = aggregateDailyCashFlows();
@@ -1193,6 +1193,7 @@ public class Trade {
 		Integer initialDirection = getInitialDirection();
 		
 		long dayDiff = DateTimeUtils.getDateDiff(firstCashFlowDate, lastCashFlowDate, TimeUnit.DAYS);
+		dayDiff += 1; // getDateDiff rounds down
 		
 		while ((amortisedCost > 0.1) || (amortisedCost < -0.1)) {
 			

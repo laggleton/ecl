@@ -4,8 +4,10 @@ import static org.junit.Assert.*;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 
 import org.junit.Test;
@@ -81,7 +83,7 @@ public class TradeTest {
 		t.getCountry().setProbabilityOfRecessionAndGrowthFromRMSE();
 		
 		Double probGrowth = t.getCountry().getProbabilityOfGrowth();
-		Double expectedResult = new Double (0.80697141d);
+		Double expectedResult = new Double (0.79669d);
 		
 		assertEquals(expectedResult, probGrowth, 0.01);
 	}
@@ -119,6 +121,24 @@ public class TradeTest {
 	}
 	
 	@Test
+	public void testDate() {
+		Date bDate = null;
+		
+		try {
+			bDate = DateFormat.ISO_FORMAT.parse("2018-03-27");
+		}
+		catch(ParseException pe) {
+			l.info("Couldn't parse date string" + pe.toString());
+			pe.printStackTrace();
+		}
+		
+		Calendar gc = new GregorianCalendar();
+		gc.setTime(bDate);
+		gc.add(Calendar.WEEK_OF_YEAR, 22);
+		l.info(DateFormat.ISO_FORMAT.format(gc.getTime()));
+	}
+	
+	@Test
 	public void evaluatesCalculateQuarterlyECL() {
 		
 		setUpTestTrade();
@@ -128,7 +148,7 @@ public class TradeTest {
 		Date endTime = new Date();
 		long diff = endTime.getTime() - startTime.getTime();
 		l.info("Start Time for quarterly ECL " + startTime.getTime() + ", endTime for ECL " + endTime.getTime() + ", diff " + diff + ", value = " + t.getECLResult().getTwelveMonthECL());
-		Double expectedResult = new Double(572541d);
+		Double expectedResult = new Double(599543d);
 		assertEquals(expectedResult, t.getECLResult().getTwelveMonthECL(), 2.0d);
 	}
 	
@@ -143,7 +163,7 @@ public class TradeTest {
 		long diff = endTime.getTime() - startTime.getTime();
 		l.info("Start Time for monthly ECL " + startTime.getTime() + ", endTime for ECL " + endTime.getTime() + ", diff " + diff + ", value = " + t.getECLResult().getTwelveMonthECL());
 		
-		Double expectedResult = new Double(571881d);
+		Double expectedResult = new Double(598922d);
 		assertEquals(expectedResult, t.getECLResult().getTwelveMonthECL(), 2.0d);
 	}
 	
@@ -158,7 +178,7 @@ public class TradeTest {
 		long diff = endTime.getTime() - startTime.getTime();
 		l.info("Start Time for daily ECL " + startTime.getTime() + ", endTime for ECL " + endTime.getTime() + ", diff " + diff + ", value = " + t.getECLResult().getTwelveMonthECL());
 		
-		Double expectedResult = new Double(571537d);
+		Double expectedResult = new Double(598594d);
 		assertEquals(expectedResult, t.getECLResult().getTwelveMonthECL(), 2.0d);
 	}
 		
