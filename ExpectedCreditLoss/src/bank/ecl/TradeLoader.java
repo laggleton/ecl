@@ -236,6 +236,10 @@ public class TradeLoader {
 				t.setLastAvailabilityDate(lastAvailabilityDate);
 				t.setIndustry(activitySector);
 				
+				t.setInterestPeriodicity(interestPeriodicity);
+				t.setInterestBasis(basis);
+				t.setLastFixingInterestRate(lastFixingInterestRate);
+				
 				LossGivenDefault lgd = new LossGivenDefault(asOfDate, overallLGDRating);
 				List<LossGivenDefault> lgds = new ArrayList<>();
 				lgds.add(lgd);

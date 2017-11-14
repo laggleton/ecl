@@ -60,6 +60,9 @@ public class Trade {
 	private Date signingDate;
 	private Date lastAvailabilityDate;
 	private String industry;
+	private String interestPeriodicity;
+	private String interestBasis;
+	private Double lastFixingInterestRate;
 	
 	public Double getFacilityCommitmentAmount() {
 		return facilityCommitmentAmount;
@@ -124,6 +127,24 @@ public class Trade {
 			}
 		}
 		return intCFs;
+	}
+	
+	public Date getLastInterestDate() {
+		List<CashFlow> intCFs = new ArrayList<>();
+		for (CashFlow cf : cfs) {
+			if (cf.getCashFlowType().equals(CashFlowType.INT)) {
+				intCFs.add(cf);
+			}
+		}
+		Collections.reverse(intCFs);
+		if (!intCFs.isEmpty()) {
+			return intCFs.get(0).getCashFlowDate();
+		}
+		else {
+			l.info("No interest caash flows");
+		}
+		
+		return BusinessDate.getInstance().getDate();
 	}
 	
 	public int assessIFRS9Staging() {
@@ -1365,7 +1386,80 @@ public class Trade {
 	}
 	
 	public void calculateInterest() {
-		//TODO
+		Date lastInterestDate = getLastInterestDate();
+		Date lastCashFlowDate = getLastCashFlowDate();
+		Date nextDueDate = getNextInterestDate(lastInterestDate, getInterestPeriodicity());
+		Date currentDate = lastInterestDate;
+		Double interimInterest = 0d;
+		Double dayCountFactor = getDayCountFactorForOneDay(getInterestBasis());
+		String disbCurrency = getFirstDisbursementCurrency();
+		Calendar gc = new GregorianCalendar();
+		gc.setTime(currentDate);
+		
+		while (currentDate.before(maturityDate)) {
+			
+			interimInterest = getBalanceAtDate(currentDate) * lastFixingInterestRate * dayCountFactor;
+			if (currentDate.equals(nextDueDate)) {
+				CashFlow intCF = new CashFlow(disbCurrency, interimInterest, currentDate, "INTEREST", disbCurrency);
+				addCF(intCF);
+				interimInterest = 0d;
+				nextDueDate = getNextInterestDate(currentDate, getInterestPeriodicity());
+			}
+			gc.add(Calendar.DAY_OF_YEAR, 1);
+			currentDate = gc.getTime();
+			
+		}
+		
+		CashFlow intCF = new CashFlow(disbCurrency, interimInterest, currentDate, "INTEREST", disbCurrency);
+		addCF(intCF);
+		
+		Collections.sort(cfs);
+	}
+	
+	public Double getBalanceAtDate(Date d) {
+		Double balance = 0d;
+		for (CashFlow cf : cfs) {
+			if (cf.getCashFlowType().equals(CashFlowType.XNL)) {
+				balance += cf.getTradeDisbursementAmount();
+			}
+		}
+		return -1d * balance;
+	}
+	
+	public Double getDayCountFactor(String basis, Date startDate, Date endDate) {
+		Double dayCountFactor = 1d;
+		switch(basis) {
+		case "A360" : dayCountFactor = ((double) DateTimeUtils.getDateDiff(startDate, endDate, TimeUnit.DAYS)) / 360d;
+		case "A365F" : dayCountFactor = ((double) DateTimeUtils.getDateDiff(startDate, endDate, TimeUnit.DAYS)) / 365d;
+		case "Actual" : dayCountFactor = ((double) DateTimeUtils.getDateDiff(startDate, endDate, TimeUnit.DAYS)) / 365.25d;
+		case "30/ACT" : dayCountFactor = ((double) DateTimeUtils.getDateDiff(startDate, endDate, TimeUnit.DAYS)) / 365.25d;
+		}
+		return dayCountFactor;
+	}
+	
+	public Double getDayCountFactorForOneDay(String basis) {
+		Double dayCountFactor = 1d;
+		switch(basis) {
+		case "A360" : dayCountFactor = 1d / 360d;
+		case "A365F" : dayCountFactor = 1d / 365d;
+		case "Actual" : dayCountFactor = 1d / 365.25d;
+		case "30/ACT" : dayCountFactor = 1d / 365.25d;
+		}
+		return dayCountFactor;
+	}
+	
+	public Date getNextInterestDate(Date lastInterestDate, String periodicity) {
+		Calendar gc = new GregorianCalendar();
+		gc.setTime(lastInterestDate);
+		
+		switch(periodicity) {
+			case "A" : gc.add(Calendar.YEAR, 1);
+			case "S" : gc.add(Calendar.MONTH, 6);
+			case "Q" : gc.add(Calendar.MONTH, 3);
+			case "M" : gc.add(Calendar.MONTH, 1);
+		}
+		
+		return gc.getTime();
 	}
 	
 	public String getStagingReason() {
@@ -1432,6 +1526,30 @@ public class Trade {
 
 	public void setCurrency(Currency currency) {
 		this.currency = currency;
+	}
+
+	public void setInterestPeriodicity(String interestPeriodicity) {
+		this.interestPeriodicity = interestPeriodicity;
+	}
+	
+	public void setInterestBasis(String interestBasis) {
+		this.interestBasis = interestBasis;
+	}
+	
+	public void setLastFixingInterestRate(Double lastFixingInterestRate) {
+		this.lastFixingInterestRate = lastFixingInterestRate;
+	}
+	
+	public String getInterestPeriodicity() {
+		return interestPeriodicity;
+	}
+
+	public String getInterestBasis() {
+		return interestBasis;
+	}
+
+	public Double getLastFixingInterestRate() {
+		return lastFixingInterestRate;
 	}
 	
 }
